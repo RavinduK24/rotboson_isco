@@ -25,6 +25,14 @@ MKL_INT order = 2;
 MKL_INT l = 1;
 double m = 1.0;
 double psi0 = 0.2;
+
+/* SELF-INTERACTION POTENTIAL (0=free, 1=quartic, 2=sextic, 3=axion, 4=solitonic, 5=KKLS) */
+MKL_INT potential_type = 0;
+double lambda_4 = 0.0;
+double lambda_6 = 0.0;
+double f_axion = 1.0;
+double sigma_soliton = 1.0;
+double kappa_kkls = 1.0;
 double sigmaR = 4.0;
 double sigmaZ = 4.0;
 double rExt = 16.0;
@@ -141,6 +149,14 @@ extern MKL_INT order;
 extern MKL_INT l;
 extern double m;
 extern double psi0;
+
+/* SELF-INTERACTION POTENTIAL */
+extern MKL_INT potential_type;
+extern double lambda_4;
+extern double lambda_6;
+extern double f_axion;
+extern double sigma_soliton;
+extern double kappa_kkls;
 extern double sigmaR;
 extern double sigmaZ;
 extern double rExt;

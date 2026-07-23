@@ -1,6 +1,7 @@
 #include "tools.h"
 #include "param.h"
 #include "regularization_coupling.h"
+#include "potential.h"
 
 // Macros for parameter ranges.
 #define MAX_DR 1.0
@@ -37,6 +38,7 @@
 
 void parser(const char *fname)
 {
+	const char *potential_string = NULL;
 	// Initialize cfg.
 	config_init(&cfg);
 
@@ -480,6 +482,62 @@ void parser(const char *fname)
 			fprintf(stderr, "PARSER: WARNING! Could not properly read \"rExt\" value from parameter file. Setting to default value, rExt = %3.5E\n", rExt);
 		}
 	}
+	// SELF-INTERACTION POTENTIAL. The string interface takes precedence.
+	if (config_lookup_string(&cfg, "potential", &potential_string) == CONFIG_TRUE)
+	{
+		potential_type = potential_type_from_name(potential_string);
+		if (potential_type < 0)
+		{
+			fprintf(stderr, "PARSER: ERROR! potential = \"%s\" is not supported.\n", potential_string);
+			fprintf(stderr, "        Use free, quartic, sextic, axion, solitonic, or kkls.\n");
+			exit(-1);
+		}
+	}
+	else if (config_lookup_int64(&cfg, "potential_type", &potential_type) == CONFIG_TRUE)
+	{
+		if (potential_type < POTENTIAL_FREE || potential_type > POTENTIAL_KKLS)
+		{
+			fprintf(stderr, "PARSER: ERROR! potential_type = %lld is not supported. Use 0 through 5.\n", potential_type);
+			fprintf(stderr, "        Please input proper value in parameter file.\n");
+			exit(-1);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "PARSER: WARNING! No potential selector found. Using potential = \"%s\".\n", potential_name(potential_type));
+	}
+	// Potential parameters. Only the active parameter is constrained.
+	config_lookup_float(&cfg, "lambda_4", &lambda_4);
+	config_lookup_float(&cfg, "lambda_6", &lambda_6);
+	config_lookup_float(&cfg, "f_axion", &f_axion);
+	config_lookup_float(&cfg, "sigma_soliton", &sigma_soliton);
+	config_lookup_float(&cfg, "kappa_kkls", &kappa_kkls);
+	if (potential_type == POTENTIAL_QUARTIC && lambda_4 < 0.0)
+	{
+		fprintf(stderr, "PARSER: ERROR! lambda_4 must be nonnegative.\n");
+		exit(-1);
+	}
+	if (potential_type == POTENTIAL_SEXTIC && lambda_6 < 0.0)
+	{
+		fprintf(stderr, "PARSER: ERROR! lambda_6 must be nonnegative.\n");
+		exit(-1);
+	}
+	if (potential_type == POTENTIAL_AXION && f_axion <= 0.0)
+	{
+		fprintf(stderr, "PARSER: ERROR! f_axion must be positive.\n");
+		exit(-1);
+	}
+	if (potential_type == POTENTIAL_SOLITONIC && sigma_soliton <= 0.0)
+	{
+		fprintf(stderr, "PARSER: ERROR! sigma_soliton must be positive.\n");
+		exit(-1);
+	}
+	if (potential_type == POTENTIAL_KKLS && kappa_kkls <= 0.0)
+	{
+		fprintf(stderr, "PARSER: ERROR! kappa_kkls must be positive.\n");
+		exit(-1);
+	}
+
 	// Initial frequency.
 	if (!w_i)
 	{
@@ -665,7 +723,13 @@ void parser(const char *fname)
 
 	// Set initial directory name.
 	// snprintf(initial_dirname, MAX_STR_LEN, "l=%lld,psi=X.XXXXXE+00,w=X.XXXXXE-01,dr=%.5E,N=%04lld,order=%lld", l, dr, NrInterior, order);
-	snprintf(initial_dirname, MAX_STR_LEN, "l=%lld,w=X.XXXXXE-01,dr=%.5E,N=%04lld", l, dr, NrInterior);
+	{
+		char potential_tag[MAX_STR_LEN];
+		potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
+			lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
+		snprintf(initial_dirname, MAX_STR_LEN, "%s,l=%lld,w=X.XXXXXE-01,dr=%.5E,N=%04lld",
+			potential_tag, l, dr, NrInterior);
+	}
 
 	// All done.
 	return;

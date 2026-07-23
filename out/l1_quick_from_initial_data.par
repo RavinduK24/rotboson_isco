@@ -1,0 +1,47 @@
+# Quick low-resolution continuation sequence.
+# Run l1_quick_from_scratch.par first.
+
+dr              = 2.50000E-01
+dz              = 2.50000E-01
+NrInterior      = 64
+NzInterior      = 64
+order           = 2
+
+readInitialData = 1
+log_alpha_i     = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/log_alpha_f.asc"
+beta_i          = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/beta_f.asc"
+log_a_i         = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/log_a_f.asc"
+log_h_i         = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/log_h_f.asc"
+psi_i           = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/psi_f.asc"
+lambda_i        = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/lambda_f.asc"
+w_i             = "l=1,w=9.50000E-01,dr=2.50000E-01,N=0064/w_f.asc"
+
+scale_u4 = 1.2
+
+l       = 1
+m       = 1.0
+
+fixedPhi    = 1
+fixedPhiR   = 2
+fixedPhiZ   = 2
+fixedOmega  = 0
+
+sweep = 1
+scale_next = 1.2
+hwl_max = 80
+hwl_min = 4
+w_min = 0.85
+
+solverType      = 1
+localSolver     = 1
+epsilon         = 1.0E-8
+maxNewtonIter   = 20
+lambda0         = 1.0E-03
+lambdaMin       = 1.0E-05
+useLowRank      = 0
+
+alphaBoundOrder = 1;
+betaBoundOrder  = 1;
+hBoundOrder     = 1;
+aBoundOrder     = 1;
+phiBoundOrder   = 1;

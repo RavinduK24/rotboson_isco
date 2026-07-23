@@ -1,14 +1,26 @@
-#.vscode/c_cpp_properties.json
-obj/*.o
-#.vscode/settings.json
-VSC_Workspace
+# Build products
 ROTBOSON
-out/*/*
-*.json
-*.cfg
-*.ipynb
-.ipynb_checkpoints/*
-*.swp
+obj/*.o
+out/test_potential
+out/test_jacobian
+
+# Generated ROTBOSON outputs
+out/*/
+out/*.log
+results/
 *.asc
 ooc_*
+
+# Python/runtime artifacts
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+*.ipynb
+
+# Local editor/runtime files
+VSC_Workspace
 .vscode/c_cpp_properties.json
+*.json
+*.cfg
+*.swp

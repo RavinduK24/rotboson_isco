@@ -1,6 +1,8 @@
 #include "tools.h"
 #include "derivatives.h"
 #include "simpson.h"
+#include "potential.h"
+#include "param.h"
 
 #define EVEN 1
 
@@ -137,6 +139,9 @@ void ex_analysis(
 	double *sph_Dth_log_a 		= (double *)SAFE_MALLOC(sizeof(double) * p_dim);
 	double *sph_Dth_psi 		= (double *)SAFE_MALLOC(sizeof(double) * p_dim);
 
+	// Self-interaction potential values.
+	double phi2_loc, V_val, dV_val, d2V_val;
+
 	// Auxiliary arrays.
 	// Integrands.
 	double *i0 = (double *)SAFE_MALLOC(sizeof(double) * p_dim);
@@ -216,11 +221,14 @@ void ex_analysis(
 
 	// Volume integrals.
 	// Komar mass 2, Komar angular momentum 2.
-	#pragma omp parallel for schedule(dynamic, 1) shared(i0, i1) private(k)
+	#pragma omp parallel for schedule(dynamic, 1) shared(i0, i1) private(k, phi2_loc, V_val, dV_val, d2V_val)
 	for (k = 0; k < p_dim; ++k)
 	{
-		i0[k] = 4.0 * M_PI * (2.0 * w * (w + l * sph_beta[k]) / exp(sph_log_alpha[k]) - exp(sph_log_alpha[k]) * m * m) * (sph_psi[k] * sph_psi[k] * pow(sph_rr[k] * sin(sph_th[k]), 2 * l)) * exp(2.0 * sph_log_a[k] + sph_log_h[k]) * sph_rr[k] * sph_rr[k] * sin(sph_th[k]);
-		i1[k] = 4.0 * M_PI * l * (w + l * sph_beta[k]) * (sph_psi[k] * sph_psi[k] * pow(sph_rr[k] * sin(sph_th[k]), 2 * l)) * exp(2.0 * sph_log_a[k] + sph_log_h[k]) * sph_rr[k] * sph_rr[k] * sin(sph_th[k]) / exp(sph_log_alpha[k]);
+		phi2_loc = sph_psi[k] * sph_psi[k] * pow(sph_rr[k] * sin(sph_th[k]), 2 * l);
+		compute_potential(phi2_loc, m*m, potential_type, lambda_4, lambda_6, f_axion,
+			sigma_soliton, kappa_kkls, &V_val, &dV_val, &d2V_val);
+		i0[k] = 4.0 * M_PI * (2.0 * w * (w + l * sph_beta[k]) * phi2_loc / exp(sph_log_alpha[k]) - exp(sph_log_alpha[k]) * V_val) * exp(2.0 * sph_log_a[k] + sph_log_h[k]) * sph_rr[k] * sph_rr[k] * sin(sph_th[k]);
+		i1[k] = 4.0 * M_PI * l * (w + l * sph_beta[k]) * phi2_loc * exp(2.0 * sph_log_a[k] + sph_log_h[k]) * sph_rr[k] * sph_rr[k] * sin(sph_th[k]) / exp(sph_log_alpha[k]);
 	}
 	// Integrate angle.
 	#pragma omp parallel for schedule(dynamic, 1) shared(I0, I1) private(k)
@@ -252,14 +260,13 @@ void ex_analysis(
 	double aux_th;
 	double aux_r;
 	double aux_rlm1;
-	//double aux_rl;
 	double aux_alpha2;
 	double aux_beta;
 	double aux_a2;
 	double aux_h2;
-	//double aux_phi;
+	double aux_phi;
 	double aux_phi_o_r;
-	//double aux_phi2;
+	double aux_phi2;
 	double aux_phi2_o_r2;
 	// GRV2.
 	*GRV2 = 0.0;
@@ -271,8 +278,7 @@ void ex_analysis(
 	}
 	// Beyond the origin, the integrand must be calculated carefully.
 	#pragma omp parallel for schedule(dynamic, 1) shared(i0, i1, i2, i3) private(k,\
-	aux_rr, aux_th, aux_r, aux_rlm1, aux_alpha2, aux_beta, aux_a2, aux_h2, aux_phi_o_r, aux_phi2_o_r2)
-	// aux_rl, axu_phi, aux_phi2)
+	aux_rr, aux_th, aux_r, aux_rlm1, aux_alpha2, aux_beta, aux_a2, aux_h2, aux_phi_o_r, aux_phi2_o_r2, aux_phi, aux_phi2, V_val, dV_val, d2V_val)
 	for (k = NthTotal; k < p_dim; ++k)
 	{
 		// Coordinates.
@@ -280,7 +286,6 @@ void ex_analysis(
 		aux_th = sph_th[k];
 		aux_r = aux_rr * sin(aux_th);
 		aux_rlm1 = (l == 1) ? 1.0 : pow(aux_r, l - 1);
-		//aux_rl = aux_rlm1 * aux_r;
 		// Metric functions.
 		aux_alpha2 = exp(2.0 * sph_log_alpha[k]);
 		aux_beta = sph_beta[k];
@@ -290,11 +295,14 @@ void ex_analysis(
 		aux_phi_o_r = sph_psi[k] * aux_rlm1;
 		aux_phi2_o_r2 = aux_phi_o_r * aux_phi_o_r;
 		// Scalar field proper.
-		//aux_phi = aux_phi_o_r * aux_r;
-		//aux_phi2 = aux_phi * aux_phi;
+		aux_phi = aux_phi_o_r * aux_r;
+		aux_phi2 = aux_phi * aux_phi;
+		// Self-interaction potential.
+		compute_potential(aux_phi2, m*m, potential_type, lambda_4, lambda_6, f_axion,
+			sigma_soliton, kappa_kkls, &V_val, &dV_val, &d2V_val);
 
 		// 8 * PI * A**2 * rr * S**phi_phi.
-		i0[k] = 4.0 * M_PI * aux_rr * (aux_a2 * (((w + l * aux_beta) * (w + l * aux_beta) / aux_alpha2 - m * m) * aux_r * aux_r + l * l / aux_h2) * aux_phi2_o_r2
+		i0[k] = 4.0 * M_PI * aux_rr * (aux_a2 * (((w + l * aux_beta) * (w + l * aux_beta) / aux_alpha2) * aux_r * aux_r + l * l / aux_h2) * aux_phi2_o_r2 - aux_a2 * V_val
 				- (l * l * aux_phi2_o_r2 + aux_rlm1 * aux_rlm1 * sin(aux_th) * sin(aux_th) * ((aux_rr * sph_Drr_psi[k]) * (aux_rr * sph_Drr_psi[k]) + sph_Dth_psi[k] * sph_Dth_psi[k])
 					+ 2.0 * l * aux_phi_o_r * aux_rlm1 * sin(aux_th) * (sin(aux_th) * (aux_rr * sph_Drr_psi[k]) + cos(aux_th) * sph_Dth_psi[k])));
 		// 0.75 * H**2 * rr * (r**2 * D_beta_D_beta) / alpha**2.
@@ -323,8 +331,7 @@ void ex_analysis(
 	}
 	// Beyond the origin, the integrand must be calculated carefully.
 	#pragma omp parallel for schedule(dynamic, 1) shared(i0, i1, i2, i3) private(k,\
-	aux_rr, aux_th, aux_r, aux_rlm1, aux_alpha2, aux_beta, aux_a2, aux_h2, aux_phi_o_r, aux_phi2_o_r2)
-	// aux_rl, aux_phi, aux_phi2)
+	aux_rr, aux_th, aux_r, aux_rlm1, aux_alpha2, aux_beta, aux_a2, aux_h2, aux_phi_o_r, aux_phi2_o_r2, aux_phi, aux_phi2, V_val, dV_val, d2V_val)
 	for (k = NthTotal; k < p_dim; ++k)
 	{
 		// Coordinates.
@@ -332,7 +339,6 @@ void ex_analysis(
 		aux_th = sph_th[k];
 		aux_r = aux_rr * sin(aux_th);
 		aux_rlm1 = (l == 1) ? 1.0 : pow(aux_r, l - 1);
-		//aux_rl = aux_rlm1 * aux_r;
 		// Metric functions.
 		aux_alpha2 = exp(2.0 * sph_log_alpha[k]);
 		aux_beta = sph_beta[k];
@@ -342,12 +348,15 @@ void ex_analysis(
 		aux_phi_o_r = sph_psi[k] * aux_rlm1;
 		aux_phi2_o_r2 = aux_phi_o_r * aux_phi_o_r;
 		// Scalar field proper.
-		//aux_phi = aux_phi_o_r * aux_r;
-		//aux_phi2 = aux_phi * aux_phi;
+		aux_phi = aux_phi_o_r * aux_r;
+		aux_phi2 = aux_phi * aux_phi;
+		// Self-interaction potential.
+		compute_potential(aux_phi2, m*m, potential_type, lambda_4, lambda_6, f_axion,
+			sigma_soliton, kappa_kkls, &V_val, &dV_val, &d2V_val);
 
 		// 4 * PI * S * A**2 * H * rr**2 * sin(th).
 		i0[k] = 4.0 * M_PI * exp(sph_log_h[k]) * aux_rr * aux_rr * sin(aux_th) * 
-				(aux_a2 * (1.5 * ((w + l * aux_beta) * (w + l * aux_beta) / aux_alpha2 - m * m) * aux_r * aux_r - 0.5 * l * l / aux_h2) * aux_phi2_o_r2
+				(aux_a2 * (1.5 * (w + l * aux_beta) * (w + l * aux_beta) / aux_alpha2 * aux_phi2 - 1.5 * V_val - 0.5 * l * l / aux_h2 * aux_phi2_o_r2)
 				-0.5 * (l * l * aux_phi2_o_r2 + aux_rlm1 * aux_rlm1 * sin(aux_th) * sin(aux_th) * ((aux_rr * sph_Drr_psi[k]) * (aux_rr * sph_Drr_psi[k]) + sph_Dth_psi[k] * sph_Dth_psi[k])
 					+ 2.0 * l * aux_phi_o_r * aux_rlm1 * sin(aux_th) * (sin(aux_th) * (aux_rr * sph_Drr_psi[k]) + cos(aux_th) * sph_Dth_psi[k])));
 		// 0.375 * H**3 * rr**2 * sin(th) * (r**2 * D_beta_D_beta) / alpha**2.

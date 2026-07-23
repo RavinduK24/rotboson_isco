@@ -1,0 +1,39 @@
+# Quick low-resolution l=1 seed for smoke testing and fast plots.
+# This keeps the domain size near 16 but reduces the grid from 256x256 to 64x64.
+
+dr              = 2.50000E-01
+dz              = 2.50000E-01
+NrInterior      = 64
+NzInterior      = 64
+order           = 2
+
+readInitialData = 0
+
+l       = 1
+m       = 1.0
+psi0    = 0.01
+sigmaR  = 4.0
+sigmaZ  = 4.0
+rExt    = 12.0
+w0      = 9.50000E-01
+
+fixedPhi    = 0
+fixedPhiR   = 0
+fixedPhiZ   = 0
+fixedOmega  = 1
+
+solverType      = 1
+localSolver     = 1
+epsilon         = 1.0E-8
+maxNewtonIter   = 20
+lambda0         = 1.0E-03
+lambdaMin       = 1.0E-05
+useLowRank      = 0
+
+sweep = 0
+
+alphaBoundOrder = 1;
+betaBoundOrder  = 1;
+hBoundOrder     = 1;
+aBoundOrder     = 1;
+phiBoundOrder   = 1;

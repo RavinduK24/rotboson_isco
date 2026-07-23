@@ -1,5 +1,13 @@
 #include "tools.h"
 #include "omega_calc.h"
+#include "potential.h"
+
+extern MKL_INT potential_type;
+extern double lambda_4;
+extern double lambda_6;
+extern double f_axion;
+extern double sigma_soliton;
+extern double kappa_kkls;
 
 // Regularized terms.
 #define Q1 1.0
@@ -56,6 +64,9 @@ void rhs_vars(
 	double phi, phi_over_r, phi2, phi2_over_r2;
 	double lambda, Dr_lambda, Dz_lambda, Drr_lambda, Dzz_lambda;
 	double Dr_u6, Dr_u7;
+
+	// Self-interaction potential values.
+	double V_val, dV_val, d2V_val;
 
 	// Derivative terms.
 	double D_l_alpha_D_l_alpha, D_l_alpha_D_beta, D_l_alpha_D_l_h, D_beta_D_l_h;
@@ -122,6 +133,10 @@ void rhs_vars(
 	phi2 = phi * phi;
 	phi2_over_r2 = phi_over_r * phi_over_r;
 
+	// Self-interaction potential.
+	compute_potential(phi2, m2, potential_type, lambda_4, lambda_6, f_axion,
+		sigma_soliton, kappa_kkls, &V_val, &dV_val, &d2V_val);
+
 	// Derivative terms.
 	D_l_alpha_D_l_alpha = Dr_l_alpha * Dr_l_alpha + Dz_l_alpha * Dz_l_alpha;
 	D_l_alpha_D_beta = Dr_l_alpha * Dr_beta + Dz_l_alpha * Dz_beta;
@@ -148,7 +163,7 @@ void rhs_vars(
 	f[IDX(i, j)] = rescale * (dr * dr * dzodr * (Drr_l_alpha + Dzz_l_alpha + (Dr_l_alpha / r)
 		+ D_l_alpha_D_l_alpha + D_l_alpha_D_l_h 
 		- 0.5 * r2_h2_over_alpha2_D_beta_D_beta 
-		+ 4.0 * M_PI * a2 * (m2 - 2.0 * w_plus_l_beta2 / alpha2) * phi2));
+		+ 4.0 * M_PI * a2 * (V_val - 2.0 * w_plus_l_beta2 * phi2 / alpha2)));
 
 	// u1 = beta.
 	f[dim + IDX(i, j)] = rescale * (dr * dr * dzodr * (Drr_beta + Dzz_beta + 3.0 * (Dr_beta / r)
@@ -159,7 +174,7 @@ void rhs_vars(
 	f[2 * dim + IDX(i, j)] = rescale * (dr * dr * dzodr * (Drr_l_h + Dzz_l_h + 2.0 * (Dr_l_h / r)
 		+ D_l_h_D_l_h + D_l_alpha_D_l_h + 0.5 * r2_h2_over_alpha2_D_beta_D_beta
 		+ (Dr_l_alpha / r) 
-		+ 4.0 * M_PI * a2 * (r2 * m2 + 2.0 * l * l / h2) * phi2_over_r2));
+		+ 4.0 * M_PI * a2 * (V_val + 2.0 * l * l * phi2_over_r2 / h2)));
 
 	// u3 = log(a).
 	f[3 * dim + IDX(i, j)] = rescale * (dr * dr * dzodr * (Drr_l_a + Dzz_l_a
@@ -168,11 +183,12 @@ void rhs_vars(
 		+ 4.0 * M_PI * ((l * l * (1.0 - a2 / h2) + a2 * r2 * w_plus_l_beta2 / alpha2) * phi2_over_r2
 			+ (2.0 * l * r * psi * Dr_psi + r2 * D_psi_D_psi) * (rlm1 * rlm1))));
 
-	// u4 = log(phi / r**l)
+	// u4 = psi (scalar field)
 	f[4 * dim + IDX(i, j)] = rescale * (dr * dr * dzodr * (Drr_psi + Dzz_psi + (2.0 * l + 1.0) * (Dr_psi / r)
 		+ D_l_alpha_D_psi + D_l_h_D_psi
 		+ l * ((Dr_l_alpha / r) + (Dr_l_h / r)) * psi
-		+ a2 * (w_plus_l_beta2 / alpha2 - m2) * psi
+		+ a2 * (w_plus_l_beta2 / alpha2) * psi
+		- a2 * dV_val * psi
 		- l * l * lambda * psi / h2));
 
 	// u5 = lambda = (A - H) / r**2.
@@ -197,7 +213,7 @@ void rhs_vars(
 		+ 2.0 * lambda * (Drr_l_h + 2.0 * Dr_l_h * Dr_l_h)
 		+ Q1 * ((2.0 * h2 / alpha) * (Dr_u6 / r))
 		+ Q2 * (Dr_u7 / r)
-		+ 8.0 * M_PI * a2 * (m2 * lambda * phi2
+		+ 8.0 * M_PI * a2 * (V_val * lambda
 			+ 2.0 * rlm1 * rlm1 * (Dr_psi / r) * (2.0 * l * psi + (r * Dr_psi)))));
 
 	// All done.

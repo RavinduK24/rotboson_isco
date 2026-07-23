@@ -1,89 +1,105 @@
-# Installation Instructions
+# ROTBOSON
 
-## Prerequisites
+ROTBOSON solves the stationary Einstein-Klein-Gordon equations for rotating boson stars in quasi-isotropic cylindrical coordinates. This workspace version adds five self-interaction models, self-describing output, and regression targets for the potential and Jacobian implementations.
 
-This assumes you are running this on Linux with GCC. Before running the makefile, you must setup two libraries.
+## Repository Provenance
 
-### MKL 
+This repository is packaged for pure rotating boson-star ISCO studies. The base solver comes from `sontanon/ROTBOSON`, starting from upstream commit `f156eea` (`Add working instructions for l=1 data`). The current repository adds self-interaction potentials, metadata, ISCO postprocessing, regression tests, and HPC templates. See `UPSTREAM.md` for the provenance note.
 
-Download Intel's MKL and follow the installation instructions [here](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html?operatingsystem=linux&linux-install=online). As of June 2024, this is:
+## HPC Clone
+
+On the HPC login node:
 
 ```bash
-wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2f3a5785-1c41-4f65-a2f9-ddf9e0db3ea0/l_onemkl_p_2024.1.0.695.sh
-
-sudo sh ./l_onemkl_p_2024.1.0.695.sh
+git clone https://github.com/RavinduK24/rotboson_isco.git
+cd rotboson_isco
+sbatch hpc/run_build.slurm
 ```
 
-By following the default installation, this will install MKL at  `/opt/intel/oneapi`. In particular, there should be a script named `setvars.sh`. By executing the following command, you will setup all the necessary MKL dependencies. 
+After the build succeeds, submit the potential-family scan scripts under `hpc/`, then run:
+
+```bash
+sbatch hpc/run_isco_scan.slurm
+```
+
+## Linux Build
+
+The code requires GCC or ICC, Intel oneMKL/PARDISO, OpenMP, and libconfig. On a Linux system with oneMKL installed:
 
 ```bash
 source /opt/intel/oneapi/setvars.sh
+export LIBCONFIGROOT=/usr
+make clean
+make all compiler=gnu
 ```
 
-You can then verify that `MKLROOT` exists in your environment by running
+The executable is `ROTBOSON`. The full Windows host build is not supported by the upstream Makefile.
 
-```bash 
-echo $MKLROOT 
-``` 
+## Scalar Potentials
 
-In my case, this will output `/opt/intel/oneapi/mkl/2024.1`.
+The matter convention is
 
-### Libconfig
-
-Install libconfig by going [here](https://hyperrealm.github.io/libconfig/), download the latest tarball and follow the install instructions. In my case this was 
-
-```bash
-tar -xf libconfig-1.7.3.tar.gz
-cd libconfig-1.7.3
-./configure 
-make 
-sudo make install
+```text
+L_Phi = -nabla(Phi*) . nabla(Phi) - V(x),   x = |Phi|^2.
 ```
 
-Notice the last `sudo` call: this will install the header and libraries to `/usr/local`. You should keep track of where you installed libconfig.
+Select a model with a string in the parameter file:
 
-## Compilation
+```text
+potential = "free"       # V = m^2 x
+potential = "quartic"    # V = m^2 x + lambda_4 x^2 / 2
+potential = "sextic"     # V = m^2 x + lambda_6 x^3 / 3
+potential = "axion"      # V = m^2 f_axion^2 [1-cos(sqrt(2x)/f_axion)]
+potential = "solitonic"  # V = m^2 x (1-2x/sigma_soliton^2)^2
+potential = "kkls"       # normalized KKLS polynomial
+```
 
-After setting up these two dependencies, you are almost ready to compile. The provided `env.bash` will make sure that MKL and libconfig are available to the compiler and linker. By executing 
+Numeric `potential_type = 0` through `5` remains supported. The active parameters are `lambda_4`, `lambda_6`, `f_axion`, `sigma_soliton`, and `kappa_kkls`. Runnable low-resolution files are in `examples/`.
 
-```bash
-source env.bash
-``` 
+All models satisfy `V_x(0)=m^2`, so the asymptotic scalar decay remains `sqrt(m^2-omega^2)`. The implementation centralizes `V`, `V_x`, and `V_xx` in `src/potential.c`; stress-energy equations use `V`, while the Klein-Gordon equation and its scalar Jacobian use `V_x` and `V_xx`.
 
-you should have `MKLROOT` and `LIBCONFIGROOT` properly setup. If you installed MKL or libconfig elsewhere, change the script as needed.
+## Run And Continue
 
-Then, compile using 
-
-```bash
-make all 
-``` 
-
-This will generate an executable in the current directory: `ROTBOSON`. 
-
-# Generating l=1 data
-
-I have provided two parameter files to generate $l=1$ data in `out`. 
-
-Execute `l1_from_scratch.par` first. For example:
+From the output directory:
 
 ```bash
-cd out 
-../ROTBOSON l1_from_scratch.par
-``` 
+../ROTBOSON ../examples/free.par
+../ROTBOSON ../examples/quartic.par
+```
 
-This should generate initial data for $l=1$, $m=1$, $\omega=0.95$. The output should be a directory named `l=1,w=9.50000E-01,dr=6.25000E-02,N=0256` if you keep the parameters unchanged.
+For continuation, point the existing `log_alpha_i`, `beta_i`, `log_h_i`, `log_a_i`, `psi_i`, `lambda_i`, and `w_i` settings at a converged directory, then use the existing `scale_next` and `sweep` controls. Do not seed across different potential conventions or coupling values without first checking that the starting solution is in the intended weak-coupling regime.
 
-Then, you can use the other parameter file to generate a lot more solutions (by using the previous "seed"):
+Output directories begin with the model and active coupling, then contain `l`, final `w`, `dr`, and `N`. Repeated runs receive a `run=NNN` suffix. Every solution contains `run_metadata.txt` with the model, all couplings, grid, final frequency, convergence status, and global diagnostics. Metadata-free upstream directories remain valid legacy free-field inputs to the Python tools.
+
+## Verification
+
+In the configured Linux oneMKL/libconfig environment:
 
 ```bash
-../ROTBOSON l1_from_initial_data.par
-``` 
+make test-potential
+make test-jacobian
+```
 
-This will execute for a while (for this configuration it will generate solutions up to $\omega = 0.675222$, at which point it will exit because the scalar field is too "spiky" and the grid resolution should be increased).
+`test-potential` checks analytic first and second derivatives and weak-field limits. `test-jacobian` compares `J v` with a centered directional finite difference for orders 2 and 4 and all six potential types; the fourth-order grid exercises the `cc`, `cs`, `sc`, and `ss` CSR paths.
 
-# TODO
+## ISCO Processing
 
-* Explain $l \geq 2$.
-* Explain interpolation as initial data.
-* Explain the nonlinear solver.
-* Redo everything in a friendlier language... 😂
+Run the standalone processor from this ROTBOSON directory after one or more solution sequences finish:
+
+```bash
+python scripts/rotboson_isco.py out \
+  --output-dir results/rotboson_isco \
+  --export-profiles
+```
+
+To add physical columns for a scalar mass of `1e-11 eV`:
+
+```bash
+python scripts/rotboson_isco.py out \
+  --output-dir results/rotboson_isco_1e-11eV \
+  --boson-mass-ev 1e-11 --strict
+```
+
+The processor analyzes both orbital branches, records every radial marginal-stability crossing, and reports the first boundary encountered moving inward from the outer stable region as the disk-facing ISCO. Stable horizonless solutions with no such boundary are reported as `all_stable_no_isco`; no radius is invented.
+
+Primary outputs are `isco_summary.csv`, `marginal_orbits.csv`, `scan_diagnostics.csv`, optional `profiles/*.csv`, and comparison plots. `isco_summary.csv` includes explicit `isco_std_*`, `isco_theo_*`, `stability_topology`, and `classification_message` columns; the definition rules are logged in `ISCO definitions.md`. The full workflow is documented in `docs/rotboson_workflow.md`, and the change ledger is `modifies rotboson.md`.

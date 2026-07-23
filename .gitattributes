@@ -1,0 +1,10 @@
+* text=auto
+
+*.c text eol=lf
+*.h text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.par text eol=lf
+*.slurm text eol=lf
+Makefile text eol=lf
+env.bash text eol=lf

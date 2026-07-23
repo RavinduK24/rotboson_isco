@@ -19,11 +19,67 @@
 #include "low_rank.h"
 #include "cart_to_pol.h"
 #include "analysis.h"
+#include "potential.h"
 
 #undef PRINT_HISTORY
 
 #define NEXT_SCALE_JUMP
 #define NEXT_SCALE 1.0
+
+static void make_unique_output_name(char *name)
+{
+	struct stat status;
+	char base[MAX_STR_LEN];
+	int counter = 1;
+	snprintf(base, sizeof(base), "%s", name);
+	while (stat(name, &status) == 0)
+	{
+		snprintf(name, MAX_STR_LEN, "%s,run=%03d", base, counter++);
+		if (counter > 999)
+		{
+			fprintf(stderr, "OUTPUT: exhausted unique directory suffixes for %s\n", base);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+static void write_run_metadata(double omega, MKL_INT errCode)
+{
+	FILE *file = fopen("run_metadata.txt", "w");
+	if (file == NULL)
+	{
+		fprintf(stderr, "OUTPUT: could not write run_metadata.txt\n");
+		return;
+	}
+	fprintf(file, "format_version=1\n");
+	fprintf(file, "potential=%s\n", potential_name(potential_type));
+	fprintf(file, "potential_type=%lld\n", potential_type);
+	fprintf(file, "coupling_name=%s\n", potential_coupling_name(potential_type));
+	fprintf(file, "coupling_value=%.17E\n", potential_coupling_value(potential_type,
+		lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls));
+	fprintf(file, "lambda_4=%.17E\n", lambda_4);
+	fprintf(file, "lambda_6=%.17E\n", lambda_6);
+	fprintf(file, "f_axion=%.17E\n", f_axion);
+	fprintf(file, "sigma_soliton=%.17E\n", sigma_soliton);
+	fprintf(file, "kappa_kkls=%.17E\n", kappa_kkls);
+	fprintf(file, "m=%.17E\n", m);
+	fprintf(file, "l=%lld\n", l);
+	fprintf(file, "omega=%.17E\n", omega);
+	fprintf(file, "dr=%.17E\n", dr);
+	fprintf(file, "dz=%.17E\n", dz);
+	fprintf(file, "NrInterior=%lld\n", NrInterior);
+	fprintf(file, "NzInterior=%lld\n", NzInterior);
+	fprintf(file, "order=%lld\n", order);
+	fprintf(file, "NrrTotal=%lld\n", NrrTotal);
+	fprintf(file, "NthTotal=%lld\n", NthTotal);
+	fprintf(file, "error_code=%lld\n", errCode);
+	fprintf(file, "convergence_status=%s\n", errCode == 0 ? "converged" : "not_converged");
+	fprintf(file, "M_Komar=%.17E\n", M_KOMAR);
+	fprintf(file, "J_Komar=%.17E\n", J_KOMAR);
+	fprintf(file, "GRV2=%.17E\n", GRV2);
+	fprintf(file, "GRV3=%.17E\n", GRV3);
+	fclose(file);
+}
 
 int main(int argc, char *argv[])
 {
@@ -76,6 +132,7 @@ int main(int argc, char *argv[])
 	// Generate directory name via format "l=?,w=X.XXXXXE-??,dr=X.XXXXXE-??,N=XXXX"
 	// w will be unknown for now so set it to X.XXXXXE-01.
 	parser(argv[1]);
+	make_unique_output_name(initial_dirname);
 
 	// Future scale factors.
 	double next_scale[GNUM + 1] = {scale_u0, scale_u1, scale_u2, scale_u3, scale_u4, scale_u5, scale_u6};
@@ -102,6 +159,13 @@ int main(int argc, char *argv[])
 	printf("***           SCALAR FIELD:                        \n");
 	printf("***            l           = %-7lld               \n", l);
 	printf("***            m           = %-12.10E          \n", m);
+	printf("***            potential   = %-12s              \n", potential_name(potential_type));
+	printf("***            pot_type    = %-7lld               \n", potential_type);
+	if (potential_type == 1) printf("***            lambda_4    = %-12.10E          \n", lambda_4);
+	if (potential_type == 2) printf("***            lambda_6    = %-12.10E          \n", lambda_6);
+	if (potential_type == 3) printf("***            f_axion     = %-12.10E          \n", f_axion);
+	if (potential_type == 4) printf("***            sigma       = %-12.10E          \n", sigma_soliton);
+	if (potential_type == 5) printf("***            kappa       = %-12.10E          \n", kappa_kkls);
 	if (fixedPhi)
 	{
 		printf("***            Scalar Field is Fixed at:           \n");
@@ -580,6 +644,7 @@ int main(int argc, char *argv[])
 		analysis(i_u, i_rr, i_th, w);
 		// Calculate rr(phi_max).
 		ex_phi_analysis(1, &phi_max, &rr_phi_max, &hwl_res, i_u, i_rr, i_th, l, ghost, order, NrrTotal, NthTotal, p_dim, drr, dth, rr_inf);
+		write_run_metadata(w, errCode);
 
 		// Clean analysis spherical variables.
 		SAFE_FREE(i_rr);
@@ -591,8 +656,31 @@ int main(int argc, char *argv[])
 
 		// Rename directory to include w.
 		// snprintf(final_dirname, MAX_STR_LEN, "l=%lld,psi=%.5E,w=%.5E,dr=%.5E,N=%04lld,order=%lld", l, i_u[4 * p_dim], w, dr, NrInterior, order);
-		snprintf(final_dirname, MAX_STR_LEN, "l=%lld,w=%.5E,dr=%.5E,N=%04lld", l, w, dr, NrInterior);
-		rename(initial_dirname, final_dirname);
+		{
+			char potential_tag[MAX_STR_LEN];
+			potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
+				lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
+			snprintf(final_dirname, MAX_STR_LEN, "%s,l=%lld,w=%.5E,dr=%.5E,N=%04lld",
+				potential_tag, l, w, dr, NrInterior);
+		}
+		make_unique_output_name(final_dirname);
+		if (rename(initial_dirname, final_dirname) != 0)
+		{
+			perror("OUTPUT: could not rename completed solution directory");
+			exit(EXIT_FAILURE);
+		}
+		snprintf(initial_dirname, MAX_STR_LEN, "%s", final_dirname);
+		{
+			char *frequency = strstr(initial_dirname, ",w=");
+			char *spacing = frequency ? strstr(frequency, ",dr=") : NULL;
+			if (frequency && spacing)
+			{
+				char tail[MAX_STR_LEN];
+				snprintf(tail, sizeof(tail), "%s", spacing);
+				snprintf(frequency, MAX_STR_LEN - (size_t)(frequency - initial_dirname),
+					",w=X.XXXXXE-01%s", tail);
+			}
+		}
 
 		// Sweep continuation if sanity checks first.
 		if ((errCode == 0) && (sweep > 0))

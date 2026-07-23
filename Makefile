@@ -113,7 +113,7 @@ $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(OUT_DIR))
 
 #SRCS = $(wildcard $(SRC_DIR)/*.c)
-SRCS = src/newton.c src/initial_interpolation.c src/qnres.c src/analysis.c src/simpson.c src/bicubic_interpolation.c src/cart_to_pol.c src/low_rank.c src/csr_exp_decay.c src/csr_omega_constraint.c src/csr_robin.c src/csr_symmetry.c src/csr_vars.c src/derivatives.c src/initial.c src/io.c src/main.c src/nleq_err.c src/nleq_res.c src/omega_calc.c src/pardiso_solve.c src/pardiso_start.c src/pardiso_stop.c src/parser.c src/qnerr.c src/rhs_vars.c src/rhs.c src/tools.c src/vector_algebra.c src/csr.c src/csr_grid_fill.c
+SRCS = src/newton.c src/initial_interpolation.c src/qnres.c src/analysis.c src/simpson.c src/bicubic_interpolation.c src/cart_to_pol.c src/low_rank.c src/csr_exp_decay.c src/csr_omega_constraint.c src/csr_robin.c src/csr_symmetry.c src/csr_vars.c src/derivatives.c src/initial.c src/io.c src/main.c src/nleq_err.c src/nleq_res.c src/omega_calc.c src/pardiso_solve.c src/pardiso_start.c src/pardiso_stop.c src/parser.c src/potential.c src/qnerr.c src/rhs_vars.c src/rhs.c src/tools.c src/vector_algebra.c src/csr.c src/csr_grid_fill.c
 OBJS = $(subst src/,obj/,$(subst .c,.o,$(SRCS)))
 
 MAIN = ROTBOSON
@@ -153,3 +153,13 @@ $(MAIN): $(OBJS)
 
 clean:
 	rm -rf obj/*.o $(MAIN) $(OUT_DIR)/$(MAIN)
+
+test-potential:
+	$(CC) -Wall -O2 -Isrc tests/test_potential.c src/potential.c -lm -o out/test_potential
+	./out/test_potential
+
+JACOBIAN_TEST_SRCS = tests/test_jacobian_directional.c src/csr.c src/csr_grid_fill.c src/csr_vars.c src/csr_omega_constraint.c src/csr_symmetry.c src/csr_robin.c src/csr_exp_decay.c src/rhs.c src/rhs_vars.c src/derivatives.c src/omega_calc.c src/tools.c src/potential.c
+
+test-jacobian:
+	$(CC) $(CFLAGS) -O1 $(MKL_INCLUDE) $(LIBCONFIG_INCLUDE) -Isrc -o out/test_jacobian $(JACOBIAN_TEST_SRCS) $(LDFLAGS) $(MKL_LD_PATH) $(LIBCONFIG_LD_PATH) $(MKL_LIBS) $(LIBCONFIG_LIB) $(OMP_LIB) $(OTHER_LIBS)
+	./out/test_jacobian
