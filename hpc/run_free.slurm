@@ -4,7 +4,7 @@
 #SBATCH --partition=h07q2
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=128G
-#SBATCH --time=12:00:00
+#SBATCH --time=72:00:00
 #SBATCH --output=rotboson_free_%j.out
 #SBATCH --error=rotboson_free_%j.err
 
@@ -17,10 +17,12 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 ROTBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON
 RUN_DIR=$ROTBOSON_DIR/out
+SCAN_DIR=$RUN_DIR/hpc_free_sequence
 
 cd "$RUN_DIR"
+source "$ROTBOSON_DIR/hpc/run_sequence_lib.sh"
 
-echo "Running free potential"
+echo "Running production free-field l=1 seed plus continuation"
 echo "START_TIME=$(date -Is)"
-"$ROTBOSON_DIR/ROTBOSON" "$ROTBOSON_DIR/examples/free.par"
+run_sequence "$ROTBOSON_DIR" "free" "none" "0.0" "$SCAN_DIR" "free"
 echo "END_TIME=$(date -Is)"

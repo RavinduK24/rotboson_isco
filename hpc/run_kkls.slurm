@@ -17,26 +17,19 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 ROTBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON
 RUN_DIR=$ROTBOSON_DIR/out
-BASE_PAR=$ROTBOSON_DIR/examples/kkls.par
 SCAN_DIR=$RUN_DIR/hpc_kkls_kappa_kkls_scan
 COUPLING_VALUES=("100.0" "30.0" "10.0" "3.0" "1.0" "0.3")
 
 mkdir -p "$SCAN_DIR/params"
 cd "$RUN_DIR"
+source "$ROTBOSON_DIR/hpc/run_sequence_lib.sh"
 
 for KAPPA in "${COUPLING_VALUES[@]}"; do
-  LABEL=$(printf "%s" "$KAPPA" | sed 's/+//g; s/-/m/g; s/\./p/g')
-  PAR_FILE=$SCAN_DIR/params/kkls_kappa_kkls_${LABEL}.par
-
-  awk -v value="$KAPPA" '
-    /^potential[[:space:]]*=/ { print "potential = \"kkls\""; next }
-    /^kappa_kkls[[:space:]]*=/ { print "kappa_kkls = " value; next }
-    { print }
-  ' "$BASE_PAR" > "$PAR_FILE"
+  LABEL="kkls_kappa_kkls_$(label_for_value "$KAPPA")"
 
   echo "============================================================"
-  echo "Running kkls kappa_kkls=$KAPPA"
+  echo "Running production kkls sequence kappa_kkls=$KAPPA"
   echo "START_TIME=$(date -Is)"
-  "$ROTBOSON_DIR/ROTBOSON" "$PAR_FILE"
+  run_sequence "$ROTBOSON_DIR" "kkls" "kappa_kkls" "$KAPPA" "$SCAN_DIR" "$LABEL"
   echo "END_TIME=$(date -Is)"
 done

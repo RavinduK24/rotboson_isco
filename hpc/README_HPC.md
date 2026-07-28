@@ -21,7 +21,7 @@ Check the build log. The executable should be:
 $HOME/ROTBOSON_ISCO/ROTBOSON/ROTBOSON
 ```
 
-## 2. One-Potential-At-A-Time Scans
+## 2. One-Potential-At-A-Time Production Sequences
 
 The Student HPC queues have small concurrent-job limits, so these templates run one potential family per submitted job. Submit the next job only after the previous one finishes.
 
@@ -51,6 +51,18 @@ The coupling values are defined near the top of each potential-specific file in 
 ```text
 out/hpc_<potential>_<coupling>_scan/params/
 ```
+
+Each solver job now runs a production `l=1` sequence for every requested model:
+
+```text
+1. N=256, dr=dz=0.0625, fourth-order seed at omega=0.95
+2. continuation from that seed using scale_next=1.1
+3. repeated solutions until the ROTBOSON sweep termination criteria are reached
+```
+
+`hpc/run_free.slurm` runs the free-field seed plus continuation. The self-interaction scripts do the same for each coupling value in their `COUPLING_VALUES` table. These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics, ISCO status/topology, and selected grid-refinement reruns.
+
+Before rerunning the same potential/coupling, archive or move the old matching production output folders under `out/`. The continuation parameter points at the canonical seed directory, so repeated identical runs should be kept separate rather than mixed in one output root.
 
 SLURM stdout/stderr files are written in the directory where you submitted the job.
 
