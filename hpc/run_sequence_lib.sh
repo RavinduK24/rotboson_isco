@@ -25,16 +25,17 @@ write_sequence_params() {
   local coupling_value="$4"
   local scan_dir="$5"
   local label="$6"
+  local ell="${7:-1}"
 
-  local seed_template="$rotboson_dir/out/l1_from_scratch.par"
-  local cont_template="$rotboson_dir/out/l1_from_initial_data.par"
+  local seed_template="$rotboson_dir/out/l${ell}_from_scratch.par"
+  local cont_template="$rotboson_dir/out/l${ell}_from_initial_data.par"
   local seed_par="$scan_dir/params/${label}_seed.par"
   local cont_par="$scan_dir/params/${label}_continue.par"
   local tag
   local seed_dir
 
   tag=$(coupling_tag "$potential" "$coupling_name" "$coupling_value")
-  seed_dir="${tag},l=1,w=9.50000E-01,dr=6.25000E-02,N=0256"
+  seed_dir="${tag},l=${ell},w=9.50000E-01,dr=6.25000E-02,N=0256"
 
   mkdir -p "$scan_dir/params"
 
@@ -47,7 +48,7 @@ write_sequence_params() {
     fi
   } >> "$seed_par"
 
-  sed "s|l=1,w=9.50000E-01,dr=6.25000E-02,N=0256|$seed_dir|g" "$cont_template" > "$cont_par"
+  sed "s|l=${ell},w=9.50000E-01,dr=6.25000E-02,N=0256|$seed_dir|g" "$cont_template" > "$cont_par"
   {
     printf "\n# HPC generated potential settings\n"
     printf "potential = \"%s\"\n" "$potential"
@@ -66,12 +67,13 @@ run_sequence() {
   local coupling_value="$4"
   local scan_dir="$5"
   local label="$6"
+  local ell="${7:-1}"
   local generated
   local seed_par
   local cont_par
   local seed_dir
 
-  generated=$(write_sequence_params "$rotboson_dir" "$potential" "$coupling_name" "$coupling_value" "$scan_dir" "$label")
+  generated=$(write_sequence_params "$rotboson_dir" "$potential" "$coupling_name" "$coupling_value" "$scan_dir" "$label" "$ell")
   seed_par=$(printf "%s" "$generated" | sed -n '1p')
   cont_par=$(printf "%s" "$generated" | sed -n '2p')
   seed_dir=$(printf "%s" "$generated" | sed -n '3p')

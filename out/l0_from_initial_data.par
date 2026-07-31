@@ -1,0 +1,52 @@
+# This parameter file continues a converged non-rotating l=0 seed.
+
+# GRID
+dr          = 6.25000E-02
+dz          = 6.25000E-02
+NrInterior  = 256
+NzInterior  = 256
+order       = 4
+
+# INITIAL DATA
+readInitialData = 1
+log_alpha_i     = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/log_alpha_f.asc"
+beta_i          = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/beta_f.asc"
+log_a_i         = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/log_a_f.asc"
+log_h_i         = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/log_h_f.asc"
+psi_i           = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/psi_f.asc"
+lambda_i        = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/lambda_f.asc"
+w_i             = "l=0,w=9.50000E-01,dr=6.25000E-02,N=0256/w_f.asc"
+scale_u4        = 1.1
+
+# SCALAR FIELD PROPERTIES
+l       = 0
+m       = 1.0
+
+# FIXED VARIABLE
+fixedPhi   = 1
+fixedPhiR  = 2
+fixedPhiZ  = 2
+fixedOmega = 0
+
+# NEXT SOLUTION
+sweep      = 1
+scale_next = 1.1
+hwl_max    = 200
+hwl_min    = 5
+w_min      = 0.5
+
+# SOLVER PARAMETERS
+solverType      = 1
+localSolver     = 1
+epsilon         = 1.0E-8
+maxNewtonIter   = 20
+lambda0         = 1.0E-03
+lambdaMin       = 1.0E-05
+useLowRank      = 0
+
+# BOUNDARY TYPES
+alphaBoundOrder = 1;
+betaBoundOrder  = 1;
+hBoundOrder     = 1;
+aBoundOrder     = 1;
+phiBoundOrder   = 1;
