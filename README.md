@@ -6,6 +6,8 @@ ROTBOSON solves the stationary Einstein-Klein-Gordon equations for rotating boso
 
 This repository is packaged for pure rotating boson-star ISCO studies. The base solver comes from `sontanon/ROTBOSON`, starting from upstream commit `f156eea` (`Add working instructions for l=1 data`). The current repository adds self-interaction potentials, metadata, ISCO postprocessing, regression tests, and HPC templates. See `UPSTREAM.md` for the provenance note.
 
+The `sphboson/` directory is a separate modified copy of `sontanon/SPHBOSON` for spherical `l=0` boson stars. ROTBOSON itself is not changed to accept `l=0`; use `sphboson/` for non-rotating free/quartic/sextic runs and process its exported metric files with the same `scripts/rotboson_isco.py` extractor.
+
 ## HPC Clone
 
 On the HPC login node:
@@ -14,6 +16,16 @@ On the HPC login node:
 git clone https://github.com/RavinduK24/rotboson_isco.git
 cd rotboson_isco
 sbatch hpc/run_build.slurm
+```
+
+For the matching spherical `l=0` solver:
+
+```bash
+cd sphboson
+sbatch hpc/run_build.slurm
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
+sbatch hpc/run_sextic.slurm
 ```
 
 After the build succeeds, submit the potential-family scan scripts under `hpc/`, then run:

@@ -1,0 +1,43 @@
+# Spherical l=0 production sequence. The solver continues internally by
+# increasing the central scalar amplitude and solving for omega at each step.
+
+dr = 0.0625
+NrInterior = 256
+order = 4
+
+m = 1.0
+phi0 = 0.02
+sigma = 4.0
+w0 = 0.95
+fixedPhi = 1
+
+potential = "free"
+lambda_4 = 0.0
+lambda_6 = 0.0
+f_axion = 1.0
+sigma_soliton = 1.0
+kappa_kkls = 1.0
+
+readInitialData = 0
+scale_u0 = 1.0
+scale_u1 = 1.0
+scale_u2 = 1.0
+scale_u3 = 1.0
+
+solverType = 1
+localSolver = 1
+epsilon = 1.0e-8
+maxNewtonIter = 100
+lambda0 = 1.0e-3
+lambdaMin = 1.0e-10
+useLowRank = 1
+
+max_initial_guess_checks = 8
+norm_f0_target = 1.0e-5
+
+scale_next = 1.1
+w_min = 0.5
+w_max = 0.999999
+w_step = 0.0
+hwl_min = 5
+hwl_max = 200

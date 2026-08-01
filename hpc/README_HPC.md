@@ -35,12 +35,15 @@ sbatch hpc/run_solitonic.slurm
 sbatch hpc/run_kkls.slurm
 ```
 
-For matching non-rotating `l=0` free/quartic/sextic scans:
+For matching non-rotating `l=0` free/quartic/sextic scans, use the separate
+SPHBOSON solver packaged under `sphboson/`:
 
 ```bash
-sbatch hpc/run_free_l0.slurm
-sbatch hpc/run_quartic_l0.slurm
-sbatch hpc/run_sextic_l0.slurm
+cd $HOME/ROTBOSON_ISCO/ROTBOSON/sphboson
+sbatch hpc/run_build.slurm
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
+sbatch hpc/run_sextic.slurm
 ```
 
 Recommended initial order:
@@ -67,8 +70,6 @@ Each solver job now runs a production `l=1` sequence for every requested model:
 2. continuation from that seed using scale_next=1.1
 3. repeated solutions until the ROTBOSON sweep termination criteria are reached
 ```
-
-The `_l0` jobs use the same grid, frequency seed, continuation settings, and coupling grids, but use `out/l0_from_scratch.par` and `out/l0_from_initial_data.par` and write `l=0` solution directories.
 
 `hpc/run_free.slurm` runs the free-field seed plus continuation. The self-interaction scripts do the same for each coupling value in their `COUPLING_VALUES` table. These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics, ISCO status/topology, and selected grid-refinement reruns.
 

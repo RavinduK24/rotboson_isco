@@ -1,0 +1,98 @@
+# SPHBOSON self-interaction and ISCO workflow
+
+This repository is a modified, standalone copy of
+[sontanon/SPHBOSON](https://github.com/sontanon/SPHBOSON). It solves the
+spherically symmetric (`l=0`) Einstein-Klein-Gordon system and remains separate
+from ROTBOSON, which is used for rotating (`l>=1`) solutions.
+
+The local extensions add the same potential conventions used by the
+`RavinduK24/rotboson_isco` workflow, potential-aware output metadata, direct
+metric export for its ISCO scanner, tests, and PolyU SLURM templates. See
+[UPSTREAM.md](UPSTREAM.md) for provenance. No license has been added because the
+upstream repository does not provide one.
+
+## Supported potentials
+
+With `x = |Phi|^2`, select a potential using `potential = "..."`:
+
+- `free`: `V = m^2 x`
+- `quartic`: `V = m^2 x + (lambda_4/2) x^2`
+- `sextic`: `V = m^2 x + (lambda_6/3) x^3`
+- `axion`: `V = 2 m^2 f_axion^2 sin^2(sqrt(2x)/(2 f_axion))`
+- `solitonic`: `V = m^2 x (1 - 2x/sigma_soliton^2)^2`
+- `kkls`: `V = m^2 x (1 - a x + b x^2)`, where
+  `a = 16 pi/(1.1 kappa_kkls)` and
+  `b = 64 pi^2/(1.1 kappa_kkls^2)`
+
+The residual and analytic Newton Jacobian both use `V`, `dV/dx`, and
+`d2V/dx2`. The `free` selection reduces exactly to the original field
+equations.
+
+## Build and test
+
+The solver requires Linux, Intel oneMKL, libconfig, GCC, and Make. On PolyU HPC:
+
+```bash
+export SPHBOSON_DIR=$HOME/SPHBOSON_ISCO/SPHBOSON
+cd "$SPHBOSON_DIR"
+sbatch hpc/run_build.slurm
+```
+
+The build job runs the potential derivative tests and validates the exported
+ISCO grid schema. A direct interactive build is:
+
+```bash
+make clean
+make all compiler=gnu
+make test
+```
+
+## Production scans
+
+The production template uses `l=0`, `m=1`, `w0=0.95`, `dr=0.0625`,
+`NrInterior=256`, fourth-order finite differences, `scale_next=1.1`, and stops
+when the solved frequency leaves `(0.5, 0.999999)` or the half-width resolution
+leaves `[5, 200]`.
+
+```bash
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
+sbatch hpc/run_sextic.slurm
+```
+
+Quartic and sextic jobs each scan coupling values
+`0, 1e-3, 1e-2, 1e-1, 1, 10`. Each submission creates a timestamped directory
+under `out/`; generated solutions and logs are intentionally ignored by Git.
+
+## ISCO extraction
+
+Every solution writes the six two-dimensional metric files and
+`run_metadata.txt` expected by the current ROTBOSON ISCO scanner. The spherical
+isotropic metric is exported with `beta=0` and
+`log_h = log_a = 2 log_psi`. Radial ghost cells are excluded.
+
+If the rotating and spherical repositories use the default HPC locations:
+
+```bash
+sbatch hpc/run_isco_scan.slurm
+```
+
+For one specific scan root:
+
+```bash
+INPUT_ROOT=$SPHBOSON_DIR/out/hpc_free_l0_YYYYMMDD_HHMMSS \
+OUTPUT_DIR=$SPHBOSON_DIR/results/isco_free_l0 \
+sbatch hpc/run_isco_scan.slurm
+```
+
+The static metric has no preferred rotation direction. The scanner therefore
+reports two sign branches with the same circular-orbit radii, energies, and
+stability, while their angular momenta have opposite signs. They are not
+physically distinct co- and counter-rotating branches.
+
+## Validation limits
+
+Passing unit tests confirms potential derivatives, the free-field reduction,
+and file-format compatibility. Production use still requires resolution and
+outer-boundary convergence studies, comparison of ADM and Komar masses, and
+comparison against published spherical boson-star sequences.

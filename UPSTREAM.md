@@ -20,6 +20,23 @@ metadata, ISCO postprocessing, Python/C regression tests, and PolyU-oriented HPC
 SLURM templates. It does not claim new authorship of the original ROTBOSON
 solver.
 
-No separate license is added here because the upstream checkout did not include
-a license file in this working tree. Confirm licensing with the original
-ROTBOSON authors before redistributing beyond research collaboration.
+The `sphboson/` directory packages a separate modified copy of:
+
+```text
+https://github.com/sontanon/SPHBOSON
+```
+
+That copy starts from upstream commit:
+
+```text
+0f582b3 Correct .gitignore.
+```
+
+It adds matching self-interaction potentials, l0 production templates, and
+metric export files compatible with the ROTBOSON ISCO scanner. The spherical
+solver is kept in its own directory so it does not change ROTBOSON's `l>=1`
+parser and equations.
+
+No separate license is added here because neither upstream checkout included a
+license file in this working tree. Confirm licensing with the original authors
+before redistributing beyond research collaboration.
