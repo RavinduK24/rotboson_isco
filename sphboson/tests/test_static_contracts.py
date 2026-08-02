@@ -17,6 +17,22 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("memcpy(u_seed + 2 * dim", initial_c)
         self.assertIn("u_seed[w_idx] = u[w_idx];", initial_c)
 
+    def test_newton_history_allocates_max_iteration_slot(self):
+        root = Path(__file__).resolve().parents[1]
+        main_c = (root / "src" / "main.c").read_text()
+
+        self.assertIn("for (i = 0; i <= maxNewtonIter; i++)", main_c)
+        self.assertNotIn("for (i = 0; i < maxNewtonIter; i++)", main_c)
+
+    def test_low_rank_path_is_disabled(self):
+        root = Path(__file__).resolve().parents[1]
+        main_c = (root / "src" / "main.c").read_text()
+        template = (root / "out" / "l0_production.par").read_text()
+
+        self.assertIn("useLowRank=1 is not supported", main_c)
+        self.assertIn("linear_solve_1 = pardiso_simple_solve;", main_c)
+        self.assertIn("useLowRank = 0", template)
+
     def test_directory_names_are_checked_for_truncation(self):
         root = Path(__file__).resolve().parents[1]
         main_c = (root / "src" / "main.c").read_text()

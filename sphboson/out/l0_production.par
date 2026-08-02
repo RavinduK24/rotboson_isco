@@ -30,7 +30,7 @@ epsilon = 1.0e-8
 maxNewtonIter = 100
 lambda0 = 1.0e-3
 lambdaMin = 1.0e-10
-useLowRank = 1
+useLowRank = 0
 
 max_initial_guess_checks = 8
 norm_f0_target = 1.0e-5

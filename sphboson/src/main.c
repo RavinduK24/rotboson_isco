@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	double **du_bar = (double **)SAFE_MALLOC((maxNewtonIter + 1) * sizeof(double *));
 
 	// Allocate memory.
-	for (i = 0; i < maxNewtonIter; i++)
+	for (i = 0; i <= maxNewtonIter; i++)
 	{
 		u[i]      = (double *)SAFE_MALLOC((GNUM * dim + 1) * sizeof(double));
 		f[i]      = (double *)SAFE_MALLOC((GNUM * dim + 1) * sizeof(double));
@@ -240,8 +240,9 @@ int main(int argc, char *argv[])
 	void (*linear_solve_1)(double *, csr_matrix *, double *);
 	if (useLowRank)
 	{
-		linear_solve_1 = pardiso_solve_low_rank;
-		diff_gen();
+		fprintf(stderr, "SPHBOSON: WARNING! useLowRank=1 is not supported in this workflow; using standard PARDISO solve.\n");
+		useLowRank = 0;
+		linear_solve_1 = pardiso_simple_solve;
 	}
 	else
 		linear_solve_1 = pardiso_simple_solve;
@@ -608,7 +609,7 @@ int main(int argc, char *argv[])
 	pardiso_stop();
 	csr_deallocate(&J);
 
-	for (i = 0; i < maxNewtonIter; i++)
+	for (i = 0; i <= maxNewtonIter; i++)
 	{
 		SAFE_FREE(u[i]);
 		SAFE_FREE(f[i]);
