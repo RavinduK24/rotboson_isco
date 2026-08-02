@@ -82,6 +82,12 @@ void parser(const char *fname)
 			fprintf(stderr, "        Please input proper value in parameter file.\n");
 			exit(-1);
 		}
+		else if (order != 4)
+		{
+			fprintf(stderr, "PARSER: ERROR! SPHBOSON currently supports only order = 4 CSR assembly.\n");
+			fprintf(stderr, "        Please set order = 4 in the parameter file.\n");
+			exit(-1);
+		}
 	}
 	else
 	{
@@ -513,11 +519,17 @@ void parser(const char *fname)
 
 	// Set initial directory name.
 	{
-		char potential_tag[MAX_STR_LEN];
+		char potential_tag[96];
+		int wrote;
 		potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
 			lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
-		snprintf(initial_dirname, MAX_STR_LEN, "%s,l=0,phi=X.XXXXXE+00,w=X.XXXXXE-01,dr=%.5E,N=%04lld,order=%lld",
+		wrote = snprintf(initial_dirname, MAX_STR_LEN, "%s,l=0,phi=X.XXXXXE+00,w=X.XXXXXE-01,dr=%.5E,N=%04lld,order=%lld",
 			potential_tag, dr, NrInterior, order);
+		if (wrote < 0 || wrote >= MAX_STR_LEN)
+		{
+			fprintf(stderr, "PARSER: ERROR! Initial output directory name exceeds %d characters.\n", MAX_STR_LEN);
+			exit(-1);
+		}
 	}
 
 	// All done.

@@ -12,20 +12,18 @@
 
 void nnz_jacobian_get_nnzs(MKL_INT *p_nnz1, MKL_INT *p_nnz2, MKL_INT *p_nnz3)
 {
-	MKL_INT nnz1, nnz2, nnz3;
 	// Select order.
 	if (order == 4)
 	{
 		// Interior points plus parity boundaries.
-		nnz1 = 12 * NrInterior + 13 + 5 + 2 + 2;
-		nnz2 = 12 * NrInterior + 13 + 5 + 2 + 2;
-		nnz3 = 16 * NrInterior + 17 + 6 + 2 + 2;
+		*p_nnz1 = 12 * NrInterior + 13 + 5 + 2 + 2;
+		*p_nnz2 = 12 * NrInterior + 13 + 5 + 2 + 2;
+		*p_nnz3 = 16 * NrInterior + 17 + 6 + 2 + 2;
+		return;
 	}
-	*p_nnz1 = nnz1;
-	*p_nnz2 = nnz2;
-	*p_nnz3 = nnz3;
 
-	return;
+	fprintf(stderr, "CSR: ERROR! order = %lld is not supported by SPHBOSON CSR assembly. Use order = 4.\n", order);
+	exit(EXIT_FAILURE);
 }
 
 MKL_INT nnz_jacobian(void)
@@ -62,6 +60,11 @@ void csr_gen_jacobian(csr_matrix A, double *u, const MKL_INT print)
 	if (order == 4)
 	{
 		csr_grid_fill_4th(A, dim, ghost, dr, u, m, r_sym, bound_order, nnzs, p_c, p_s, p_bound, jacobian_4th_order_variable_omega_c, jacobian_4th_order_variable_omega_s);
+	}
+	else
+	{
+		fprintf(stderr, "CSR: ERROR! order = %lld is not supported by SPHBOSON CSR assembly. Use order = 4.\n", order);
+		exit(EXIT_FAILURE);
 	}
 
 	// FINALLY, FILL OMEGA EQUATION OR u3(fixed_phi) CONSTRAINT.

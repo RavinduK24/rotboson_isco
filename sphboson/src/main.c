@@ -460,11 +460,17 @@ int main(int argc, char *argv[])
 
 		// Rename directory to include w.
 		{
-			char potential_tag[MAX_STR_LEN];
+			char potential_tag[96];
+			int wrote;
 			potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
 				lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
-			snprintf(final_dirname, MAX_STR_LEN, "%s,l=0,phi=%.5E,w=%.5E,dr=%.5E,N=%04lld,order=%lld",
+			wrote = snprintf(final_dirname, MAX_STR_LEN, "%s,l=0,phi=%.5E,w=%.5E,dr=%.5E,N=%04lld,order=%lld",
 				potential_tag, phi_max, w, dr, NrInterior, order);
+			if (wrote < 0 || wrote >= MAX_STR_LEN)
+			{
+				fprintf(stderr, "OUTPUT: final directory name exceeds %d characters.\n", MAX_STR_LEN);
+				exit(EXIT_FAILURE);
+			}
 		}
 		printf("Changing to directory %s.\n", final_dirname);
 		if ((io_code = rename(initial_dirname, final_dirname)) != 0)
