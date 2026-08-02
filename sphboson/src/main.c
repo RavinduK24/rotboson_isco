@@ -37,6 +37,38 @@ static void make_unique_output_name(char *name)
 	}
 }
 
+static void reset_initial_output_name(char *initial_name, const char *final_name)
+{
+	char *phi_field;
+	char *grid_fields;
+	char grid_tail[MAX_STR_LEN];
+	int wrote;
+
+	snprintf(initial_name, MAX_STR_LEN, "%s", final_name);
+	phi_field = strstr(initial_name, ",phi=");
+	grid_fields = phi_field != NULL ? strstr(phi_field, ",dr=") : NULL;
+	if (phi_field == NULL || grid_fields == NULL)
+	{
+		fprintf(stderr, "OUTPUT: could not reset continuation directory name from %s\n", final_name);
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(grid_tail, sizeof(grid_tail), "%s", grid_fields);
+	{
+		char *run_suffix = strstr(grid_tail, ",run=");
+		if (run_suffix != NULL)
+			*run_suffix = '\0';
+	}
+	wrote = snprintf(phi_field, MAX_STR_LEN - (size_t)(phi_field - initial_name),
+		",phi=X.XXXXXE+00,w=X.XXXXXE-01%s", grid_tail);
+	if (wrote < 0 || wrote >= MAX_STR_LEN - (size_t)(phi_field - initial_name))
+	{
+		fprintf(stderr, "OUTPUT: continuation directory name exceeds %d characters.\n", MAX_STR_LEN);
+		exit(EXIT_FAILURE);
+	}
+	make_unique_output_name(initial_name);
+}
+
 int main(int argc, char *argv[])
 {
 	// I/O error code.
@@ -463,7 +495,7 @@ int main(int argc, char *argv[])
 		ex_phi_analysis(1, &phi_max, &hwl_res, u[k], ghost, order, dim);
 		if (write_isco_export(r, u[k], u[k] + dim, dim, ghost, m, w,
 			potential_type, lambda_4, lambda_6, f_axion, sigma_soliton,
-			kappa_kkls, M_KOM, M_ADM, errCode, dr, NrInterior, order) != 0)
+			kappa_kkls, M_KOM, M_ADM, phi_max, errCode, dr, NrInterior, order) != 0)
 		{
 			fprintf(stderr, "OUTPUT: failed to write ISCO-compatible metric files.\n");
 			exit(EXIT_FAILURE);
@@ -499,6 +531,7 @@ int main(int argc, char *argv[])
 			printf("errno : %s\n", strerror(errno));
 			exit(-1);
 		}
+		reset_initial_output_name(initial_dirname, final_dirname);
 
 		// Sweep continuation if sanity checks first.
 		if (errCode == 0)

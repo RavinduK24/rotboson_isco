@@ -48,8 +48,22 @@ class StaticContractTests(unittest.TestCase):
         main_c = (root / "src" / "main.c").read_text()
 
         self.assertIn("static void make_unique_output_name", main_c)
+        self.assertIn("static void reset_initial_output_name", main_c)
+        self.assertIn('",phi=X.XXXXXE+00,w=X.XXXXXE-01%s"', main_c)
+        self.assertIn('strstr(grid_tail, ",run=")', main_c)
         self.assertIn('"%s,run=%03d"', main_c)
-        self.assertEqual(main_c.count("make_unique_output_name("), 3)
+        self.assertEqual(main_c.count("make_unique_output_name("), 4)
+
+    def test_isco_export_metadata_includes_phi_max(self):
+        root = Path(__file__).resolve().parents[1]
+        export_c = (root / "src" / "isco_export.c").read_text()
+        export_h = (root / "src" / "isco_export.h").read_text()
+        test_c = (root / "tests" / "test_isco_export.c").read_text()
+
+        self.assertIn('fprintf(file, "phi_max=%.17E\\n", phi_max);', export_c)
+        self.assertIn("double M_Komar, double M_ADM, double phi_max", export_c)
+        self.assertIn("double M_Komar, double M_ADM, double phi_max", export_h)
+        self.assertIn("0.61, 0.60, 0.25, 0", test_c)
 
     def test_csr_rejects_unsupported_order(self):
         root = Path(__file__).resolve().parents[1]

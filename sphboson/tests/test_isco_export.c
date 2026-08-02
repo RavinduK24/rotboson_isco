@@ -10,5 +10,5 @@ int main(void)
 	double log_psi[] = {0.0, 0.0, 0.12, 0.10, 0.07, 0.04, 0.02};
 	return write_isco_export(r, log_alpha, log_psi, 7, 2,
 		1.0, 0.9, POTENTIAL_QUARTIC, 10.0, 0.0, 1.0, 1.0, 1.0,
-		0.61, 0.60, 0, 0.1, 4, 4) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+		0.61, 0.60, 0.25, 0, 0.1, 4, 4) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

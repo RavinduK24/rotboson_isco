@@ -61,7 +61,7 @@ static int write_grid(const char *filename, enum grid_kind kind,
 static int write_metadata(double m, double omega, int potential_type,
 	double lambda_4, double lambda_6, double f_axion,
 	double sigma_soliton, double kappa_kkls,
-	double M_Komar, double M_ADM, long long error_code,
+	double M_Komar, double M_ADM, double phi_max, long long error_code,
 	double dr, long long NrInterior, long long order, long long radial_points)
 {
 	FILE *file = fopen("run_metadata.txt", "w");
@@ -86,6 +86,7 @@ static int write_metadata(double m, double omega, int potential_type,
 	fprintf(file, "m=%.17E\n", m);
 	fprintf(file, "l=0\n");
 	fprintf(file, "omega=%.17E\n", omega);
+	fprintf(file, "phi_max=%.17E\n", phi_max);
 	fprintf(file, "dr=%.17E\n", dr);
 	fprintf(file, "NrInterior=%lld\n", NrInterior);
 	fprintf(file, "order=%lld\n", order);
@@ -104,7 +105,7 @@ int write_isco_export(const double *r, const double *log_alpha,
 	double m, double omega, int potential_type,
 	double lambda_4, double lambda_6, double f_axion,
 	double sigma_soliton, double kappa_kkls,
-	double M_Komar, double M_ADM, long long error_code,
+	double M_Komar, double M_ADM, double phi_max, long long error_code,
 	double dr, long long NrInterior, long long order)
 {
 	int status = 0;
@@ -115,7 +116,7 @@ int write_isco_export(const double *r, const double *log_alpha,
 	status |= write_grid("sph_log_h_f.asc", GRID_LOG_SPATIAL, r, log_alpha, log_psi, dim, ghost);
 	status |= write_grid("sph_log_a_f.asc", GRID_LOG_SPATIAL, r, log_alpha, log_psi, dim, ghost);
 	status |= write_metadata(m, omega, potential_type, lambda_4, lambda_6,
-		f_axion, sigma_soliton, kappa_kkls, M_Komar, M_ADM, error_code,
+		f_axion, sigma_soliton, kappa_kkls, M_Komar, M_ADM, phi_max, error_code,
 		dr, NrInterior, order, dim - ghost);
 	return status;
 }
