@@ -74,7 +74,7 @@ Each submission creates a timestamped directory under `out/`; generated
 solutions and logs are intentionally ignored by Git.
 
 Each `phi0` run is isolated under `solutions/<label>/`. If a low-amplitude or
-otherwise difficult point fails, the job records it in `run_status.tsv` and
+otherwise difficult point fails, the job records it in `run_status.csv` and
 continues to the next `phi0` value instead of aborting the whole scan.
 
 ## ISCO extraction

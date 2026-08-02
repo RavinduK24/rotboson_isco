@@ -47,13 +47,13 @@ run_single_phi0() {
   local phi0="$7"
   local parameter_file
   local solution_dir="$scan_dir/solutions/$label"
-  local status_file="$scan_dir/run_status.tsv"
+  local status_file="$scan_dir/run_status.csv"
 
   parameter_file=$(write_sequence_params "$sphboson_dir" "$potential" \
     "$coupling_name" "$coupling_value" "$scan_dir" "$label" "$phi0")
   mkdir -p "$solution_dir"
   if [ ! -f "$status_file" ]; then
-    printf "label\tpotential\tcoupling_name\tcoupling_value\tphi0\texit_code\n" > "$status_file"
+    printf "label,potential,coupling_name,coupling_value,phi0,exit_code\n" > "$status_file"
   fi
 
   echo "Parameter file: $parameter_file"
@@ -67,7 +67,7 @@ run_single_phi0() {
   )
   local exit_code=$?
   set -e
-  printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$label" "$potential" "$coupling_name" \
+  printf "%s,%s,%s,%s,%s,%s\n" "$label" "$potential" "$coupling_name" \
     "$coupling_value" "$phi0" "$exit_code" >> "$status_file"
   echo "END_SINGLE=$(date -Is)"
   return "$exit_code"

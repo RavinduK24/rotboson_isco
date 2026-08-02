@@ -88,7 +88,7 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn('s/^phi0 = .*/phi0 = ${phi0}/', lib)
         self.assertIn("w_min = 0.999999", lib)
         self.assertIn('solution_dir="$scan_dir/solutions/$label"', lib)
-        self.assertIn('status_file="$scan_dir/run_status.tsv"', lib)
+        self.assertIn('status_file="$scan_dir/run_status.csv"', lib)
         self.assertIn("set +e", lib)
         self.assertIn("WARNING: $label failed; continuing with next phi0.", lib)
         self.assertNotIn("run_sequence()", lib)
