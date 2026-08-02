@@ -20,55 +20,6 @@
 #include "potential.h"
 #include "isco_export.h"
 
-static void make_unique_output_name(char *name)
-{
-	struct stat status;
-	char base[MAX_STR_LEN];
-	int counter = 1;
-	snprintf(base, sizeof(base), "%s", name);
-	while (stat(name, &status) == 0)
-	{
-		snprintf(name, MAX_STR_LEN, "%s,run=%03d", base, counter++);
-		if (counter > 999)
-		{
-			fprintf(stderr, "OUTPUT: exhausted unique directory suffixes for %s\n", base);
-			exit(EXIT_FAILURE);
-		}
-	}
-}
-
-static void reset_initial_output_name(char *initial_name, const char *final_name)
-{
-	char *phi_field;
-	char *grid_fields;
-	char grid_tail[MAX_STR_LEN];
-	int wrote;
-
-	snprintf(initial_name, MAX_STR_LEN, "%s", final_name);
-	phi_field = strstr(initial_name, ",phi=");
-	grid_fields = phi_field != NULL ? strstr(phi_field, ",dr=") : NULL;
-	if (phi_field == NULL || grid_fields == NULL)
-	{
-		fprintf(stderr, "OUTPUT: could not reset continuation directory name from %s\n", final_name);
-		exit(EXIT_FAILURE);
-	}
-
-	snprintf(grid_tail, sizeof(grid_tail), "%s", grid_fields);
-	{
-		char *run_suffix = strstr(grid_tail, ",run=");
-		if (run_suffix != NULL)
-			*run_suffix = '\0';
-	}
-	wrote = snprintf(phi_field, MAX_STR_LEN - (size_t)(phi_field - initial_name),
-		",phi=X.XXXXXE+00,w=X.XXXXXE-01%s", grid_tail);
-	if (wrote < 0 || wrote >= MAX_STR_LEN - (size_t)(phi_field - initial_name))
-	{
-		fprintf(stderr, "OUTPUT: continuation directory name exceeds %d characters.\n", MAX_STR_LEN);
-		exit(EXIT_FAILURE);
-	}
-	make_unique_output_name(initial_name);
-}
-
 int main(int argc, char *argv[])
 {
 	// I/O error code.
@@ -117,7 +68,6 @@ int main(int argc, char *argv[])
 
 	// Parse arguments.
 	parser(argv[1]);
-	make_unique_output_name(initial_dirname);
 
 	// Future scale factors.
 	double next_scale[GNUM + 1] = { scale_u0, scale_u1, scale_u2, scale_u3 };
@@ -224,7 +174,7 @@ int main(int argc, char *argv[])
 	// Also include radial grid.
 	double *r = (double *)SAFE_MALLOC(dim * sizeof(double));
 
-	// Initial data seed stores all grid functions plus the omega variable.
+	// Initial data seed.
 	u_seed = (double *)SAFE_MALLOC((GNUM * dim + 1) * sizeof(double));
 
 	// Auxiliary derivative integers.
@@ -290,7 +240,7 @@ int main(int argc, char *argv[])
 	void (*linear_solve_1)(double *, csr_matrix *, double *);
 	if (useLowRank)
 	{
-		fprintf(stderr, "SPHBOSON: WARNING! useLowRank=1 is not supported in this workflow; using standard PARDISO solve.\n");
+		fprintf(stderr, "SPHBOSON: useLowRank=1 is not supported in this integrated build; using standard PARDISO solve.\n");
 		useLowRank = 0;
 		linear_solve_1 = pardiso_simple_solve;
 	}
@@ -523,7 +473,6 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
-		make_unique_output_name(final_dirname);
 		printf("Changing to directory %s.\n", final_dirname);
 		if ((io_code = rename(initial_dirname, final_dirname)) != 0)
 		{
@@ -531,7 +480,6 @@ int main(int argc, char *argv[])
 			printf("errno : %s\n", strerror(errno));
 			exit(-1);
 		}
-		reset_initial_output_name(initial_dirname, final_dirname);
 
 		// Sweep continuation if sanity checks first.
 		if (errCode == 0)

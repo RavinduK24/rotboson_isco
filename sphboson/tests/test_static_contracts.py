@@ -43,17 +43,6 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("wrote < 0 || wrote >= MAX_STR_LEN", main_c)
         self.assertIn("wrote < 0 || wrote >= MAX_STR_LEN", parser_c)
 
-    def test_output_directory_names_are_unique(self):
-        root = Path(__file__).resolve().parents[1]
-        main_c = (root / "src" / "main.c").read_text()
-
-        self.assertIn("static void make_unique_output_name", main_c)
-        self.assertIn("static void reset_initial_output_name", main_c)
-        self.assertIn('",phi=X.XXXXXE+00,w=X.XXXXXE-01%s"', main_c)
-        self.assertIn('strstr(grid_tail, ",run=")', main_c)
-        self.assertIn('"%s,run=%03d"', main_c)
-        self.assertEqual(main_c.count("make_unique_output_name("), 4)
-
     def test_isco_export_metadata_includes_phi_max(self):
         root = Path(__file__).resolve().parents[1]
         export_c = (root / "src" / "isco_export.c").read_text()
@@ -72,6 +61,13 @@ class StaticContractTests(unittest.TestCase):
 
         self.assertIn("CSR: ERROR! order = %lld is not supported", csr_c)
         self.assertIn("SPHBOSON currently supports only order = 4", parser_c)
+
+    def test_upstream_continuation_is_unchanged(self):
+        root = Path(__file__).resolve().parents[1]
+        main_c = (root / "src" / "main.c").read_text()
+
+        self.assertIn("next_scale[2] = peak_next[2] / peak_prev[2];", main_c)
+        self.assertNotIn("const double phi_scale = scale_next;", main_c)
 
 
 if __name__ == "__main__":
