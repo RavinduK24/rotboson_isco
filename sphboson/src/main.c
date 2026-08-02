@@ -174,8 +174,8 @@ int main(int argc, char *argv[])
 	// Also include radial grid.
 	double *r = (double *)SAFE_MALLOC(dim * sizeof(double));
 
-	// Initial data seed.
-	u_seed = (double *)SAFE_MALLOC(dim * sizeof(double));
+	// Initial data seed stores all grid functions plus the omega variable.
+	u_seed = (double *)SAFE_MALLOC((GNUM * dim + 1) * sizeof(double));
 
 	// Auxiliary derivative integers.
 	Dr_u  = (double *)SAFE_MALLOC((3 * dim + 1) * sizeof(double));
