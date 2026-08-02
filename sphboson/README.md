@@ -33,7 +33,7 @@ equations.
 The solver requires Linux, Intel oneMKL, libconfig, GCC, and Make. On PolyU HPC:
 
 ```bash
-export SPHBOSON_DIR=$HOME/SPHBOSON_ISCO/SPHBOSON
+export SPHBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON/sphboson
 cd "$SPHBOSON_DIR"
 sbatch hpc/run_build.slurm
 ```
