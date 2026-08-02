@@ -43,6 +43,14 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("wrote < 0 || wrote >= MAX_STR_LEN", main_c)
         self.assertIn("wrote < 0 || wrote >= MAX_STR_LEN", parser_c)
 
+    def test_output_directory_names_are_unique(self):
+        root = Path(__file__).resolve().parents[1]
+        main_c = (root / "src" / "main.c").read_text()
+
+        self.assertIn("static void make_unique_output_name", main_c)
+        self.assertIn('"%s,run=%03d"', main_c)
+        self.assertEqual(main_c.count("make_unique_output_name("), 3)
+
     def test_csr_rejects_unsupported_order(self):
         root = Path(__file__).resolve().parents[1]
         csr_c = (root / "src" / "csr.c").read_text()

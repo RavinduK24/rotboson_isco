@@ -20,6 +20,23 @@
 #include "potential.h"
 #include "isco_export.h"
 
+static void make_unique_output_name(char *name)
+{
+	struct stat status;
+	char base[MAX_STR_LEN];
+	int counter = 1;
+	snprintf(base, sizeof(base), "%s", name);
+	while (stat(name, &status) == 0)
+	{
+		snprintf(name, MAX_STR_LEN, "%s,run=%03d", base, counter++);
+		if (counter > 999)
+		{
+			fprintf(stderr, "OUTPUT: exhausted unique directory suffixes for %s\n", base);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	// I/O error code.
@@ -68,6 +85,7 @@ int main(int argc, char *argv[])
 
 	// Parse arguments.
 	parser(argv[1]);
+	make_unique_output_name(initial_dirname);
 
 	// Future scale factors.
 	double next_scale[GNUM + 1] = { scale_u0, scale_u1, scale_u2, scale_u3 };
@@ -473,6 +491,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
+		make_unique_output_name(final_dirname);
 		printf("Changing to directory %s.\n", final_dirname);
 		if ((io_code = rename(initial_dirname, final_dirname)) != 0)
 		{
