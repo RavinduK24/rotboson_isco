@@ -69,6 +69,22 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("next_scale[2] = peak_next[2] / peak_prev[2];", main_c)
         self.assertNotIn("const double phi_scale = scale_next;", main_c)
 
+    def test_hpc_runs_external_phi0_scan(self):
+        root = Path(__file__).resolve().parents[1]
+        lib = (root / "hpc" / "run_sequence_lib.sh").read_text()
+        free = (root / "hpc" / "run_free.slurm").read_text()
+        quartic = (root / "hpc" / "run_quartic.slurm").read_text()
+        sextic = (root / "hpc" / "run_sextic.slurm").read_text()
+
+        self.assertIn("run_single_phi0()", lib)
+        self.assertIn("run_phi0_scan()", lib)
+        self.assertIn('s/^phi0 = .*/phi0 = ${phi0}/', lib)
+        self.assertIn("w_min = 0.999999", lib)
+        self.assertNotIn("run_sequence()", lib)
+        for script in (free, quartic, sextic):
+            self.assertIn("PHI0_VALUES=(", script)
+            self.assertIn("run_phi0_scan", script)
+
 
 if __name__ == "__main__":
     unittest.main()

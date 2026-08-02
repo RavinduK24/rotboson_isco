@@ -18,9 +18,10 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 SPHBOSON_DIR=${SPHBOSON_DIR:-$HOME/ROTBOSON_ISCO/ROTBOSON/sphboson}
 SCAN_DIR=$SPHBOSON_DIR/out/hpc_quartic_l0_$(date +%Y%m%d_%H%M%S)
 COUPLING_VALUES=("0.0" "1.0e-3" "1.0e-2" "1.0e-1" "1.0" "10.0")
+PHI0_VALUES=(${PHI0_VALUES:-0.005 0.0075 0.010 0.015 0.020 0.030 0.040 0.060 0.080 0.100 0.150 0.200 0.300 0.400})
 
 source "$SPHBOSON_DIR/hpc/run_sequence_lib.sh"
 for LAMBDA in "${COUPLING_VALUES[@]}"; do
   LABEL="quartic_lambda_4_$(label_for_value "$LAMBDA")"
-  run_sequence "$SPHBOSON_DIR" "quartic" "lambda_4" "$LAMBDA" "$SCAN_DIR" "$LABEL"
+  run_phi0_scan "$SPHBOSON_DIR" "quartic" "lambda_4" "$LAMBDA" "$SCAN_DIR" "$LABEL" "${PHI0_VALUES[@]}"
 done

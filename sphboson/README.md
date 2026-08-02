@@ -50,9 +50,10 @@ make test
 ## Production scans
 
 The production template uses `l=0`, `m=1`, `w0=0.95`, `dr=0.0625`,
-`NrInterior=256`, fourth-order finite differences, `scale_next=1.1`, and stops
-when the solved frequency leaves `(0.5, 0.999999)` or the half-width resolution
-leaves `[5, 200]`.
+`NrInterior=256`, and fourth-order finite differences. The HPC wrappers run a
+clean external amplitude scan: each parameter file fixes one `phi0`, forces the
+upstream internal continuation to stop after that one solved model, and writes
+metadata containing the solved `phi_max`.
 
 ```bash
 sbatch hpc/run_free.slurm
@@ -61,8 +62,16 @@ sbatch hpc/run_sextic.slurm
 ```
 
 Quartic and sextic jobs each scan coupling values
-`0, 1e-3, 1e-2, 1e-1, 1, 10`. Each submission creates a timestamped directory
-under `out/`; generated solutions and logs are intentionally ignored by Git.
+`0, 1e-3, 1e-2, 1e-1, 1, 10`. The default amplitude grid is
+`phi0 = 0.005, 0.0075, 0.010, 0.015, 0.020, 0.030, 0.040, 0.060, 0.080, 0.100,
+0.150, 0.200, 0.300, 0.400`. Override it at submission time with, for example:
+
+```bash
+PHI0_VALUES="0.01 0.02 0.04 0.08 0.16 0.32" sbatch hpc/run_free.slurm
+```
+
+Each submission creates a timestamped directory under `out/`; generated
+solutions and logs are intentionally ignored by Git.
 
 ## ISCO extraction
 
