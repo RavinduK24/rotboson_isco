@@ -39,8 +39,9 @@ void pardiso_simple_solve(	double *u	,	// Solution array.
 		// Analysis phase has been completed.
 		A->analysis_phase = 1;
 
-		// Enable CG preconditioning.
-		iparm[3] = 61;
+		// Keep the standard path fully direct. Iterative-direct CGS can fail
+		// on weak-field fixed-amplitude points with recent oneMKL versions.
+		iparm[3] = 0;
 	}
 
 	// Numerical factorization.

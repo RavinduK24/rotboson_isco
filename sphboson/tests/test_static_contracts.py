@@ -33,6 +33,13 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("linear_solve_1 = pardiso_simple_solve;", main_c)
         self.assertIn("useLowRank = 0", template)
 
+    def test_standard_pardiso_path_stays_direct(self):
+        root = Path(__file__).resolve().parents[1]
+        pardiso_c = (root / "src" / "pardiso_solve.c").read_text()
+
+        self.assertIn("iparm[3] = 0;", pardiso_c)
+        self.assertNotIn("iparm[3] = 61;", pardiso_c)
+
     def test_directory_names_are_checked_for_truncation(self):
         root = Path(__file__).resolve().parents[1]
         main_c = (root / "src" / "main.c").read_text()
@@ -80,6 +87,10 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn("run_phi0_scan()", lib)
         self.assertIn('s/^phi0 = .*/phi0 = ${phi0}/', lib)
         self.assertIn("w_min = 0.999999", lib)
+        self.assertIn('solution_dir="$scan_dir/solutions/$label"', lib)
+        self.assertIn('status_file="$scan_dir/run_status.tsv"', lib)
+        self.assertIn("set +e", lib)
+        self.assertIn("WARNING: $label failed; continuing with next phi0.", lib)
         self.assertNotIn("run_sequence()", lib)
         for script in (free, quartic, sextic):
             self.assertIn("PHI0_VALUES=(", script)

@@ -46,18 +46,31 @@ run_single_phi0() {
   local label="$6"
   local phi0="$7"
   local parameter_file
+  local solution_dir="$scan_dir/solutions/$label"
+  local status_file="$scan_dir/run_status.tsv"
 
   parameter_file=$(write_sequence_params "$sphboson_dir" "$potential" \
     "$coupling_name" "$coupling_value" "$scan_dir" "$label" "$phi0")
-  mkdir -p "$scan_dir/solutions"
+  mkdir -p "$solution_dir"
+  if [ ! -f "$status_file" ]; then
+    printf "label\tpotential\tcoupling_name\tcoupling_value\tphi0\texit_code\n" > "$status_file"
+  fi
 
   echo "Parameter file: $parameter_file"
   echo "phi0=$phi0"
-  echo "Solution root: $scan_dir/solutions"
+  echo "Solution root: $solution_dir"
   echo "START_SINGLE=$(date -Is)"
-  cd "$scan_dir/solutions"
-  "$sphboson_dir/SPHBOSON" "$parameter_file"
+  set +e
+  (
+    cd "$solution_dir"
+    "$sphboson_dir/SPHBOSON" "$parameter_file"
+  )
+  local exit_code=$?
+  set -e
+  printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$label" "$potential" "$coupling_name" \
+    "$coupling_value" "$phi0" "$exit_code" >> "$status_file"
   echo "END_SINGLE=$(date -Is)"
+  return "$exit_code"
 }
 
 run_phi0_scan() {
@@ -73,7 +86,9 @@ run_phi0_scan() {
 
   for phi0 in "$@"; do
     label="${label_prefix}_phi0_$(label_for_value "$phi0")"
-    run_single_phi0 "$sphboson_dir" "$potential" "$coupling_name" \
-      "$coupling_value" "$scan_dir" "$label" "$phi0"
+    if ! run_single_phi0 "$sphboson_dir" "$potential" "$coupling_name" \
+      "$coupling_value" "$scan_dir" "$label" "$phi0"; then
+      echo "WARNING: $label failed; continuing with next phi0." >&2
+    fi
   done
 }

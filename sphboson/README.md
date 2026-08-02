@@ -73,6 +73,10 @@ PHI0_VALUES="0.01 0.02 0.04 0.08 0.16 0.32" sbatch hpc/run_free.slurm
 Each submission creates a timestamped directory under `out/`; generated
 solutions and logs are intentionally ignored by Git.
 
+Each `phi0` run is isolated under `solutions/<label>/`. If a low-amplitude or
+otherwise difficult point fails, the job records it in `run_status.tsv` and
+continues to the next `phi0` value instead of aborting the whole scan.
+
 ## ISCO extraction
 
 Every solution writes the six two-dimensional metric files and
