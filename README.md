@@ -15,10 +15,22 @@ On the HPC login node:
 ```bash
 git clone https://github.com/RavinduK24/rotboson_isco.git
 cd rotboson_isco
-sbatch hpc/run_build.slurm
+bash hpc/verify_then_submit_free_and_lambda4.sh
 ```
 
-For the matching spherical `l=0` solver:
+For an existing HPC checkout:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+git pull --ff-only origin main
+bash hpc/verify_then_submit_free_and_lambda4.sh
+```
+
+This submits separate dependent jobs for build, dry free-field smoke test,
+dry quartic `Lambda=200` smoke test, dry cleanup, production free field, and
+production quartic `Lambda=200`.
+
+For the separate spherical `l=0` solver:
 
 ```bash
 cd sphboson
@@ -28,7 +40,7 @@ sbatch hpc/run_quartic.slurm
 sbatch hpc/run_sextic.slurm
 ```
 
-After the build succeeds, submit the potential-family scan scripts under `hpc/`, then run:
+After production finishes, run:
 
 ```bash
 sbatch hpc/run_isco_scan.slurm
