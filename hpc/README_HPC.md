@@ -8,7 +8,37 @@ $HOME/ROTBOSON_ISCO/ROTBOSON
 
 Edit `ROTBOSON_DIR` in the scripts if your upload path is different.
 
-## 1. Build
+## 1. Pull, Build, And Dry Test
+
+On the HPC login node, pull only fast-forward changes:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+git pull --ff-only origin main
+```
+
+`--ff-only` is intentional: it refuses to merge if the HPC checkout has local commits or divergent history.
+
+To verify the checkout before production, submit the full dependency chain:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+bash hpc/verify_then_submit_free_and_lambda4.sh
+```
+
+This submits:
+
+```text
+1. hpc/run_build.slurm
+2. hpc/run_dry_test.slurm
+3. hpc/run_cleanup_dry_test.slurm
+4. hpc/run_free.slurm
+5. hpc/run_quartic.slurm
+```
+
+The dry test runs low-resolution `N=64` free and quartic `Lambda=200` smoke solves, then removes dry-test solution data and dry-test logs before production starts.
+
+To only build:
 
 ```bash
 cd $HOME/ROTBOSON_ISCO/ROTBOSON
