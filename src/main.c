@@ -34,7 +34,12 @@ static void make_unique_output_name(char *name)
 	snprintf(base, sizeof(base), "%s", name);
 	while (stat(name, &status) == 0)
 	{
-		snprintf(name, MAX_STR_LEN, "%s,run=%03d", base, counter++);
+		int written = snprintf(name, MAX_STR_LEN, "%s,run=%03d", base, counter++);
+		if (written < 0 || written >= MAX_STR_LEN)
+		{
+			fprintf(stderr, "OUTPUT: unique directory name is too long for %s\n", base);
+			exit(EXIT_FAILURE);
+		}
 		if (counter > 999)
 		{
 			fprintf(stderr, "OUTPUT: exhausted unique directory suffixes for %s\n", base);
@@ -658,10 +663,16 @@ int main(int argc, char *argv[])
 		// snprintf(final_dirname, MAX_STR_LEN, "l=%lld,psi=%.5E,w=%.5E,dr=%.5E,N=%04lld,order=%lld", l, i_u[4 * p_dim], w, dr, NrInterior, order);
 		{
 			char potential_tag[MAX_STR_LEN];
+			int written;
 			potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
 				lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
-			snprintf(final_dirname, MAX_STR_LEN, "%s,l=%lld,w=%.5E,dr=%.5E,N=%04lld",
+			written = snprintf(final_dirname, MAX_STR_LEN, "%s,l=%lld,w=%.5E,dr=%.5E,N=%04lld",
 				potential_tag, l, w, dr, NrInterior);
+			if (written < 0 || written >= MAX_STR_LEN)
+			{
+				fprintf(stderr, "OUTPUT: final directory name is too long\n");
+				exit(EXIT_FAILURE);
+			}
 		}
 		make_unique_output_name(final_dirname);
 		if (rename(initial_dirname, final_dirname) != 0)

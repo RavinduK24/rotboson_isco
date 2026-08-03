@@ -725,10 +725,16 @@ void parser(const char *fname)
 	// snprintf(initial_dirname, MAX_STR_LEN, "l=%lld,psi=X.XXXXXE+00,w=X.XXXXXE-01,dr=%.5E,N=%04lld,order=%lld", l, dr, NrInterior, order);
 	{
 		char potential_tag[MAX_STR_LEN];
+		int written;
 		potential_output_tag(potential_tag, sizeof(potential_tag), potential_type,
 			lambda_4, lambda_6, f_axion, sigma_soliton, kappa_kkls);
-		snprintf(initial_dirname, MAX_STR_LEN, "%s,l=%lld,w=X.XXXXXE-01,dr=%.5E,N=%04lld",
+		written = snprintf(initial_dirname, MAX_STR_LEN, "%s,l=%lld,w=X.XXXXXE-01,dr=%.5E,N=%04lld",
 			potential_tag, l, dr, NrInterior);
+		if (written < 0 || written >= MAX_STR_LEN)
+		{
+			fprintf(stderr, "PARSER: ERROR! initial directory name is too long.\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	// All done.

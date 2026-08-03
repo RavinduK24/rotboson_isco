@@ -1,7 +1,7 @@
 #include <libconfig.h>
 
 // String length.
-#define MAX_STR_LEN 256
+#define MAX_STR_LEN 512
 
 // Number of grid variables.
 #define GNUM 6
