@@ -18,6 +18,9 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 ROTBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON
 
 cd "$ROTBOSON_DIR"
+source "$ROTBOSON_DIR/hpc/job_utils.sh"
+cleanup_old_slurm_logs "rotboson_build" "$ROTBOSON_DIR"
+
 make clean
 make all compiler=gnu
 make test-potential

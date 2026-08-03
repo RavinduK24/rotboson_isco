@@ -42,6 +42,15 @@ The four jobs are:
 
 The dry-test job runs low-resolution `N=64` free and quartic `Lambda=200` smoke solves. If both complete, it removes the dry-test parameter files, dry-test solution directories, and dry-test logs. If it fails, the logs remain for debugging.
 
+Each job removes older SLURM logs with its own prefix when it starts, while preserving the current job's log:
+
+```text
+rotboson_build_*.out/.err
+rotboson_dry_*.out/.err
+rotboson_free_*.out/.err
+rotboson_quartic_*.out/.err
+```
+
 Check the build log. The executable should be:
 
 ```text

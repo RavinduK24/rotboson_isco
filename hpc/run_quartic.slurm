@@ -25,6 +25,9 @@ ELL_VALUES=(1 2 3 4)
 CLEAN_OLD_DATA=${CLEAN_OLD_DATA:-1}
 
 cd "$RUN_DIR"
+source "$ROTBOSON_DIR/hpc/job_utils.sh"
+cleanup_old_slurm_logs "rotboson_quartic" "$ROTBOSON_DIR"
+
 if [ "$CLEAN_OLD_DATA" = "1" ]; then
   rm -rf "$SCAN_DIR"
 fi
