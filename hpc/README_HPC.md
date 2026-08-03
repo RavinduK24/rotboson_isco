@@ -23,27 +23,27 @@ $HOME/ROTBOSON_ISCO/ROTBOSON/ROTBOSON
 
 ## 2. One-Potential-At-A-Time Production Sequences
 
-The Student HPC queues have small concurrent-job limits, so these templates run one potential family per submitted job. Submit the next job only after the previous one finishes.
+The Student HPC queues have small concurrent-job limits, so these templates run one potential family per submitted job. Submit the next job only after the previous one finishes. This comparison package is restricted to ROTBOSON rotating jobs for:
+
+- free field
+- quartic self-interaction
 
 ```bash
 cd $HOME/ROTBOSON_ISCO/ROTBOSON
-sbatch hpc/run_free.slurm
-sbatch hpc/run_quartic.slurm
-sbatch hpc/run_sextic.slurm
-sbatch hpc/run_axion.slurm
-sbatch hpc/run_solitonic.slurm
-sbatch hpc/run_kkls.slurm
+bash hpc/submit_free_and_lambda4.sh
 ```
 
-For matching non-rotating `l=0` free/quartic/sextic scans, use the separate
-SPHBOSON solver packaged under `sphboson/`:
+The helper submits `run_free.slurm` first, then submits `run_quartic.slurm` with an `afterok` dependency on the free-field job. To submit manually instead, run:
 
 ```bash
-cd $HOME/ROTBOSON_ISCO/ROTBOSON/sphboson
-sbatch hpc/run_build.slurm
 sbatch hpc/run_free.slurm
 sbatch hpc/run_quartic.slurm
-sbatch hpc/run_sextic.slurm
+```
+
+The full parameter list is in:
+
+```text
+hpc/rotboson_param_list.csv
 ```
 
 Recommended initial order:
@@ -51,11 +51,9 @@ Recommended initial order:
 ```text
 run_free.slurm
 run_quartic.slurm
-run_sextic.slurm
-run_axion.slurm
-run_solitonic.slurm
-run_kkls.slurm
 ```
+
+Each script runs `k=l=1,2,3,4`. ROTBOSON is not used for `k=0` in this package; use only rotating comparisons unless you deliberately add a separate spherical solver run.
 
 The coupling values are defined near the top of each potential-specific file in `COUPLING_VALUES=(...)`. Generated parameter files are written to:
 
@@ -63,7 +61,7 @@ The coupling values are defined near the top of each potential-specific file in 
 out/hpc_<potential>_<coupling>_scan/params/
 ```
 
-Each solver job now runs a production `l=1` sequence for every requested model:
+Each solver job now runs production `k=l=1,2,3,4` sequences for every requested model:
 
 ```text
 1. N=256, dr=dz=0.0625, fourth-order seed at omega=0.95
@@ -71,9 +69,23 @@ Each solver job now runs a production `l=1` sequence for every requested model:
 3. repeated solutions until the ROTBOSON sweep termination criteria are reached
 ```
 
-`hpc/run_free.slurm` runs the free-field seed plus continuation. The self-interaction scripts do the same for each coupling value in their `COUPLING_VALUES` table. These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics, ISCO status/topology, and selected grid-refinement reruns.
+`hpc/run_free.slurm` runs the free-field seed plus continuation. `hpc/run_quartic.slurm` does the same for the single `Lambda=200` comparison coupling. These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics and selected grid-refinement reruns.
 
-Before rerunning the same potential/coupling, archive or move the old matching production output folders under `out/`. The continuation parameter points at the canonical seed directory, so repeated identical runs should be kept separate rather than mixed in one output root.
+For the 2014 Grandclement, Some, and Gourgoulhon quartic comparison, the paper potential is:
+
+```text
+V = m^2 |Phi|^2 (1 + 2*pi*Lambda*|Phi|^2)
+```
+
+ROTBOSON uses:
+
+```text
+V = m^2 x + lambda_4*x^2/2,  x=|Phi|^2
+```
+
+With `m=1`, the matching coefficient is `lambda_4 = 4*pi*Lambda`; therefore `Lambda=200` is submitted as `lambda_4=2513.2741228718345`. The Table II targets for `k=1..4` are `Mmax=(3.48, 4.08, 4.81, 5.59)` at `omega=(0.82, 0.80, 0.78, 0.76)`.
+
+By default `CLEAN_OLD_DATA=1`, so every submitted production job deletes old matching solution folders under `out/` before rerunning. To keep existing data, submit with `CLEAN_OLD_DATA=0`.
 
 SLURM stdout/stderr files are written in the directory where you submitted the job.
 

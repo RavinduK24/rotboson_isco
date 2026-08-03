@@ -27,8 +27,8 @@ write_sequence_params() {
   local label="$6"
   local ell="${7:-1}"
 
-  local seed_template="$rotboson_dir/out/l${ell}_from_scratch.par"
-  local cont_template="$rotboson_dir/out/l${ell}_from_initial_data.par"
+  local seed_template="$rotboson_dir/out/l1_from_scratch.par"
+  local cont_template="$rotboson_dir/out/l1_from_initial_data.par"
   local seed_par="$scan_dir/params/${label}_seed.par"
   local cont_par="$scan_dir/params/${label}_continue.par"
   local tag
@@ -39,7 +39,7 @@ write_sequence_params() {
 
   mkdir -p "$scan_dir/params"
 
-  cp "$seed_template" "$seed_par"
+  sed -E "s/^[[:space:]]*l[[:space:]]*=.*/l = ${ell}/" "$seed_template" > "$seed_par"
   {
     printf "\n# HPC generated potential settings\n"
     printf "potential = \"%s\"\n" "$potential"
@@ -48,7 +48,8 @@ write_sequence_params() {
     fi
   } >> "$seed_par"
 
-  sed "s|l=${ell},w=9.50000E-01,dr=6.25000E-02,N=0256|$seed_dir|g" "$cont_template" > "$cont_par"
+  sed -E "s/^[[:space:]]*l[[:space:]]*=.*/l = ${ell}/" "$cont_template" \
+    | sed "s|l=1,w=9.50000E-01,dr=6.25000E-02,N=0256|$seed_dir|g" > "$cont_par"
   {
     printf "\n# HPC generated potential settings\n"
     printf "potential = \"%s\"\n" "$potential"
@@ -58,6 +59,24 @@ write_sequence_params() {
   } >> "$cont_par"
 
   printf "%s\n%s\n%s\n" "$seed_par" "$cont_par" "$seed_dir"
+}
+
+cleanup_sequence_outputs() {
+  local rotboson_dir="$1"
+  local potential="$2"
+  local coupling_name="$3"
+  local coupling_value="$4"
+  local ell="${5:-1}"
+  local tag
+
+  tag=$(coupling_tag "$potential" "$coupling_name" "$coupling_value")
+  echo "Cleaning old outputs for ${tag},l=${ell}"
+  find "$rotboson_dir/out" -maxdepth 1 -type d \
+    -name "${tag},l=${ell},w=*,dr=6.25000E-02,N=0256*" -exec rm -rf {} +
+  find "$rotboson_dir/out" -maxdepth 1 -type d \
+    -name "l=${ell},w=*,dr=6.25000E-02,N=0256*" -exec rm -rf {} +
+  find "$rotboson_dir/out" -maxdepth 1 -type d \
+    -name "interrupted_*_l=${ell},w=*,dr=6.25000E-02,N=0256*" -exec rm -rf {} +
 }
 
 run_sequence() {
@@ -72,6 +91,10 @@ run_sequence() {
   local seed_par
   local cont_par
   local seed_dir
+
+  if [ "${CLEAN_OLD_DATA:-1}" = "1" ]; then
+    cleanup_sequence_outputs "$rotboson_dir" "$potential" "$coupling_name" "$coupling_value" "$ell"
+  fi
 
   generated=$(write_sequence_params "$rotboson_dir" "$potential" "$coupling_name" "$coupling_value" "$scan_dir" "$label" "$ell")
   seed_par=$(printf "%s" "$generated" | sed -n '1p')

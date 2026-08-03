@@ -18,11 +18,19 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 ROTBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON
 RUN_DIR=$ROTBOSON_DIR/out
 SCAN_DIR=$RUN_DIR/hpc_free_sequence
+ELL_VALUES=(1 2 3 4)
+CLEAN_OLD_DATA=${CLEAN_OLD_DATA:-1}
 
 cd "$RUN_DIR"
+if [ "$CLEAN_OLD_DATA" = "1" ]; then
+  rm -rf "$SCAN_DIR"
+fi
 source "$ROTBOSON_DIR/hpc/run_sequence_lib.sh"
 
-echo "Running production free-field l=1 seed plus continuation"
-echo "START_TIME=$(date -Is)"
-run_sequence "$ROTBOSON_DIR" "free" "none" "0.0" "$SCAN_DIR" "free"
-echo "END_TIME=$(date -Is)"
+for ELL in "${ELL_VALUES[@]}"; do
+  echo "============================================================"
+  echo "Running production free-field k=l=$ELL seed plus continuation"
+  echo "START_TIME=$(date -Is)"
+  run_sequence "$ROTBOSON_DIR" "free" "none" "0.0" "$SCAN_DIR" "free_l${ELL}" "$ELL"
+  echo "END_TIME=$(date -Is)"
+done
