@@ -119,7 +119,14 @@ double bicubic_csr_interpolator(const double f00,
 	double a[D_NCOLS] = { 0.0 };
 
 	// Perform CSR matrix multiplication.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 	mkl_dcsrgemv(&T, &NROWS, A, iA, jA, x, a);
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 	// Now do dot product using step sizes obtained as follows:
 	double d00 = 1.0;
