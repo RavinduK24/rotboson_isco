@@ -39,8 +39,9 @@ void pardiso_simple_solve(	double *u	,	// Solution array.
 		// Analysis phase has been completed.
 		A->analysis_phase = 1;
 
-		// Enable CG preconditioning.
-		iparm[3] = 61;
+		// Keep direct PARDISO solves. Iterative-direct mode can fail for
+		// strongly self-interacting continuation steps.
+		iparm[3] = 0;
 	}
 
 	// Numerical factorization.

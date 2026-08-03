@@ -39,6 +39,15 @@ mkdir -p "$DRY_PARAM_DIR"
 cp "$ROTBOSON_DIR/examples/free.par" "$DRY_PARAM_DIR/free_dry.par"
 cp "$ROTBOSON_DIR/examples/quartic.par" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"
 sed -i -E "s/^[[:space:]]*lambda_4[[:space:]]*=.*/lambda_4 = ${LAMBDA4_GRANDCLEMENT_200}/" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"
+for PARAM_FILE in "$DRY_PARAM_DIR/free_dry.par" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"; do
+  {
+    printf "\n# HPC explicit parser defaults\n"
+    printf "max_initial_guess_checks = 8\n"
+    printf "norm_f0_target = 1.0E-5\n"
+    printf "rr_phi_max_minimum = 1.0\n"
+    printf "rr_phi_max_maximum = 100.0\n"
+  } >> "$PARAM_FILE"
+done
 
 echo "START_DRY_FREE=$(date -Is)"
 "$ROTBOSON_DIR/ROTBOSON" "$DRY_PARAM_DIR/free_dry.par"
