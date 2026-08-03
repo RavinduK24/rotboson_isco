@@ -8,7 +8,7 @@ $HOME/ROTBOSON_ISCO/ROTBOSON
 
 Edit `ROTBOSON_DIR` in the scripts if your upload path is different.
 
-## 1. Pull, Build, And Dry Test
+## 1. Pull
 
 On the HPC login node, pull only fast-forward changes:
 
@@ -19,32 +19,28 @@ git pull --ff-only origin main
 
 `--ff-only` is intentional: it refuses to merge if the HPC checkout has local commits or divergent history.
 
-To verify the checkout before production, submit the full dependency chain:
+## 2. Four Manual Jobs
 
-```bash
-cd $HOME/ROTBOSON_ISCO/ROTBOSON
-bash hpc/verify_then_submit_free_and_lambda4.sh
-```
-
-This submits:
-
-```text
-1. hpc/run_build.slurm
-2. hpc/run_dry_free.slurm
-3. hpc/run_dry_quartic_lambda4.slurm
-4. hpc/run_cleanup_dry_test.slurm
-5. hpc/run_free.slurm
-6. hpc/run_quartic.slurm
-```
-
-The dry jobs run low-resolution `N=64` smoke solves separately, first free and then quartic `Lambda=200`. The cleanup job removes dry-test solution data and dry-test logs before production starts.
-
-To only build:
+Submit these manually, in this order. Wait for each job to finish successfully before submitting the next one.
 
 ```bash
 cd $HOME/ROTBOSON_ISCO/ROTBOSON
 sbatch hpc/run_build.slurm
+sbatch hpc/run_dry_test.slurm
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
 ```
+
+The four jobs are:
+
+```text
+1. hpc/run_build.slurm
+2. hpc/run_dry_test.slurm
+3. hpc/run_free.slurm
+4. hpc/run_quartic.slurm
+```
+
+The dry-test job runs low-resolution `N=64` free and quartic `Lambda=200` smoke solves. If both complete, it removes the dry-test parameter files, dry-test solution directories, and dry-test logs. If it fails, the logs remain for debugging.
 
 Check the build log. The executable should be:
 
@@ -52,24 +48,12 @@ Check the build log. The executable should be:
 $HOME/ROTBOSON_ISCO/ROTBOSON/ROTBOSON
 ```
 
-## 2. One-Potential-At-A-Time Production Sequences
+## 3. Production Sequences
 
-The Student HPC queues have small concurrent-job limits, so these templates run one potential family per submitted job. Submit the next job only after the previous one finishes. This comparison package is restricted to ROTBOSON rotating jobs for:
+This comparison package is restricted to ROTBOSON rotating jobs for:
 
 - free field
 - quartic self-interaction
-
-```bash
-cd $HOME/ROTBOSON_ISCO/ROTBOSON
-bash hpc/submit_free_and_lambda4.sh
-```
-
-The helper submits `run_free.slurm` first, then submits `run_quartic.slurm` with an `afterok` dependency on the free-field job. To submit manually instead, run:
-
-```bash
-sbatch hpc/run_free.slurm
-sbatch hpc/run_quartic.slurm
-```
 
 The full parameter list is in:
 
@@ -122,7 +106,7 @@ SLURM stdout/stderr files are written in the directory where you submitted the j
 
 ROTBOSON solution directories are created under `out/`.
 
-## 3. Generic ISCO Postprocessing
+## 4. Generic ISCO Postprocessing
 
 After the solver array finishes:
 

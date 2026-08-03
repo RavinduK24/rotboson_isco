@@ -15,7 +15,10 @@ On the HPC login node:
 ```bash
 git clone https://github.com/RavinduK24/rotboson_isco.git
 cd rotboson_isco
-bash hpc/verify_then_submit_free_and_lambda4.sh
+sbatch hpc/run_build.slurm
+sbatch hpc/run_dry_test.slurm
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
 ```
 
 For an existing HPC checkout:
@@ -23,12 +26,15 @@ For an existing HPC checkout:
 ```bash
 cd $HOME/ROTBOSON_ISCO/ROTBOSON
 git pull --ff-only origin main
-bash hpc/verify_then_submit_free_and_lambda4.sh
+sbatch hpc/run_build.slurm
+sbatch hpc/run_dry_test.slurm
+sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic.slurm
 ```
 
-This submits separate dependent jobs for build, dry free-field smoke test,
-dry quartic `Lambda=200` smoke test, dry cleanup, production free field, and
-production quartic `Lambda=200`.
+Submit them manually in that order, waiting for each job to finish successfully
+before submitting the next one. The dry-test job removes its successful dry-test
+data and dry-test logs before production.
 
 For the separate spherical `l=0` solver:
 
