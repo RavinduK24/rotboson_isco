@@ -95,10 +95,12 @@ Each solver job now runs production `k=l=1,2,3,4` sequences for every requested 
 
 `hpc/run_free.slurm` runs the free-field seed plus continuation. It is the `Lambda=0` free-field comparison.
 
-`hpc/run_quartic.slurm` runs the Grandclement-style quartic interaction strengths:
+`hpc/run_quartic.slurm` runs a direct code-parameter quartic scan:
 
 ```text
-paper Lambda = 100, 200, 1000
+lambda_4 = 1e-3, 1e-2, 1e-1, 1, 10, 100, 1000,
+           1256.6370614359173, 2513.2741228718345,
+           1e4, 12566.370614359172
 ```
 
 ROTBOSON's quartic potential is:
@@ -113,7 +115,7 @@ Grandclement et al. use:
 V = m^2 |Phi|^2 (1 + 2*pi*Lambda*|Phi|^2)
 ```
 
-With `m=1`, the matching coefficient is therefore `lambda_4 = 4*pi*Lambda`. The submitted code values are:
+With `m=1`, the matching coefficient is therefore `lambda_4 = 4*pi*Lambda`. Two values in the direct `lambda_4` scan correspond to paper-convention reference points:
 
 ```text
 Lambda=100  -> lambda_4=1256.6370614359173
@@ -121,7 +123,7 @@ Lambda=200  -> lambda_4=2513.2741228718345
 Lambda=1000 -> lambda_4=12566.370614359172
 ```
 
-The direct 2014 Table II comparison is the `Lambda=200` subset. Its targets for `k=1..4` are `Mmax=(3.48, 4.08, 4.81, 5.59)` at `omega=(0.82, 0.80, 0.78, 0.76)`. The `Lambda=100` and `Lambda=1000` rows are extra scans in the same paper convention; they are not Table II target rows in that paper.
+The direct 2014 Table II comparison quoted for `Lambda=200` is included as `lambda_4=2513.2741228718345`.
 
 These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics and selected grid-refinement reruns.
 

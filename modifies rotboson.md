@@ -163,10 +163,10 @@ Added PolyU-oriented SLURM templates under `external/ROTBOSON/hpc`:
 - Updated `run_build.slurm` and `run_parameter_scan.slurm` to use `${LD_LIBRARY_PATH:-}` so `set -u` does not fail on HPC nodes where `LD_LIBRARY_PATH` starts unset.
 - Updated `ROTBOSON_DIR` defaults in all SLURM templates from `$HOME/ROTBOSON/ROTBOSON` to `$HOME/ROTBOSON_ISCO/ROTBOSON` for the planned fresh HPC upload layout.
 
-On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic jobs only. The quartic job now uses Grandclement's paper convention for `Lambda` and converts it to the ROTBOSON coefficient `lambda_4 = 4*pi*Lambda`:
+On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic jobs only. The quartic job now scans direct ROTBOSON `lambda_4` values, while retaining two paper-convention reference values where `lambda_4 = 4*pi*Lambda`:
 
 - `external/ROTBOSON/hpc/run_free.slurm`: one free-field run.
-- `external/ROTBOSON/hpc/run_quartic.slurm`: quartic self-interaction scan over paper `Lambda = 100, 200, 1000`.
+- `external/ROTBOSON/hpc/run_quartic.slurm`: quartic self-interaction scan over `lambda_4 = 1e-3, 1e-2, 1e-1, 1, 10, 100, 1000, 1256.6370614359173, 2513.2741228718345, 1e4, 12566.370614359172`.
 - Removed `external/ROTBOSON/hpc/run_parameter_scan.slurm`.
 - Removed inactive axion, KKLS, sextic, and solitonic SLURM entry points from `hpc/` so the active job list matches the current comparison plan.
 
