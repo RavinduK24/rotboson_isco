@@ -163,10 +163,10 @@ Added PolyU-oriented SLURM templates under `external/ROTBOSON/hpc`:
 - Updated `run_build.slurm` and `run_parameter_scan.slurm` to use `${LD_LIBRARY_PATH:-}` so `set -u` does not fail on HPC nodes where `LD_LIBRARY_PATH` starts unset.
 - Updated `ROTBOSON_DIR` defaults in all SLURM templates from `$HOME/ROTBOSON/ROTBOSON` to `$HOME/ROTBOSON_ISCO/ROTBOSON` for the planned fresh HPC upload layout.
 
-On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic `Lambda=200` comparison jobs only:
+On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic jobs only, then reverted from the high-coupling `Lambda=200` comparison attempt back to the earlier successful mild quartic scan:
 
 - `external/ROTBOSON/hpc/run_free.slurm`: one free-field run.
-- `external/ROTBOSON/hpc/run_quartic.slurm`: Grandclement `Lambda=200` comparison run, submitted as `lambda_4 = 4*pi*200`.
+- `external/ROTBOSON/hpc/run_quartic.slurm`: quartic self-interaction scan over `lambda_4 = 0, 1e-3, 1e-2, 1e-1, 1, 10`.
 - Removed `external/ROTBOSON/hpc/run_parameter_scan.slurm`.
 - Removed inactive axion, KKLS, sextic, and solitonic SLURM entry points from `hpc/` so the active job list matches the current comparison plan.
 

@@ -18,7 +18,7 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 ROTBOSON_DIR=${ROTBOSON_DIR:-$HOME/ROTBOSON_ISCO/ROTBOSON}
 RUN_DIR=$ROTBOSON_DIR/out
 DRY_PARAM_DIR=$RUN_DIR/hpc_dry_params
-LAMBDA4_GRANDCLEMENT_200=2513.2741228718345
+DRY_LAMBDA4=1.0
 
 source "$ROTBOSON_DIR/hpc/job_utils.sh"
 cleanup_old_slurm_logs "rotboson_dry" "$ROTBOSON_DIR"
@@ -26,7 +26,7 @@ cleanup_old_slurm_logs "rotboson_dry" "$ROTBOSON_DIR"
 cleanup_dry_outputs() {
   rm -rf "$DRY_PARAM_DIR"
   find "$RUN_DIR" -maxdepth 1 -type d -name "pot=free,l=1,w=*,dr=2.50000E-01,N=0064*" -exec rm -rf {} +
-  find "$RUN_DIR" -maxdepth 1 -type d -name "pot=quartic,lambda_4=2.51327E+03,l=1,w=*,dr=2.50000E-01,N=0064*" -exec rm -rf {} +
+  find "$RUN_DIR" -maxdepth 1 -type d -name "pot=quartic,lambda_4=1.00000E+00,l=1,w=*,dr=2.50000E-01,N=0064*" -exec rm -rf {} +
 }
 
 mkdir -p "$DRY_PARAM_DIR"
@@ -37,9 +37,9 @@ cleanup_dry_outputs
 mkdir -p "$DRY_PARAM_DIR"
 
 cp "$ROTBOSON_DIR/examples/free.par" "$DRY_PARAM_DIR/free_dry.par"
-cp "$ROTBOSON_DIR/examples/quartic.par" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"
-sed -i -E "s/^[[:space:]]*lambda_4[[:space:]]*=.*/lambda_4 = ${LAMBDA4_GRANDCLEMENT_200}/" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"
-for PARAM_FILE in "$DRY_PARAM_DIR/free_dry.par" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"; do
+cp "$ROTBOSON_DIR/examples/quartic.par" "$DRY_PARAM_DIR/quartic_dry.par"
+sed -i -E "s/^[[:space:]]*lambda_4[[:space:]]*=.*/lambda_4 = ${DRY_LAMBDA4}/" "$DRY_PARAM_DIR/quartic_dry.par"
+for PARAM_FILE in "$DRY_PARAM_DIR/free_dry.par" "$DRY_PARAM_DIR/quartic_dry.par"; do
   {
     printf "\n# HPC explicit parser defaults\n"
     printf "max_initial_guess_checks = 8\n"
@@ -53,9 +53,9 @@ echo "START_DRY_FREE=$(date -Is)"
 "$ROTBOSON_DIR/ROTBOSON" "$DRY_PARAM_DIR/free_dry.par"
 echo "END_DRY_FREE=$(date -Is)"
 
-echo "START_DRY_QUARTIC_LAMBDA200=$(date -Is)"
-"$ROTBOSON_DIR/ROTBOSON" "$DRY_PARAM_DIR/quartic_lambda200_dry.par"
-echo "END_DRY_QUARTIC_LAMBDA200=$(date -Is)"
+echo "START_DRY_QUARTIC=$(date -Is)"
+"$ROTBOSON_DIR/ROTBOSON" "$DRY_PARAM_DIR/quartic_dry.par"
+echo "END_DRY_QUARTIC=$(date -Is)"
 
 echo "Dry test passed; removing dry-test data and logs"
 cleanup_dry_outputs

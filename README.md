@@ -34,7 +34,7 @@ sbatch hpc/run_quartic.slurm
 
 Submit them manually in that order, waiting for each job to finish successfully
 before submitting the next one. The dry-test job removes its successful dry-test
-data and dry-test logs before production.
+data, and each job removes older matching SLURM logs when it starts.
 
 For the separate spherical `l=0` solver:
 

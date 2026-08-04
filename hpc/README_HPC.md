@@ -40,9 +40,9 @@ The four jobs are:
 4. hpc/run_quartic.slurm
 ```
 
-The dry-test job runs low-resolution `N=64` free and quartic `Lambda=200` smoke solves. If both complete, it removes the dry-test parameter files, dry-test solution directories, and dry-test logs. If it fails, the logs remain for debugging.
+The dry-test job runs low-resolution `N=64` free and quartic `lambda_4=1` smoke solves. If both complete, it removes the dry-test parameter files and dry-test solution directories. If it fails, the logs remain for debugging.
 
-Each job removes older SLURM logs with its own prefix when it starts, while preserving the current job's log:
+Each job removes older SLURM logs with its own prefix when it starts, while preserving the current job's active log:
 
 ```text
 rotboson_build_*.out/.err
@@ -93,21 +93,15 @@ Each solver job now runs production `k=l=1,2,3,4` sequences for every requested 
 3. repeated solutions until the ROTBOSON sweep termination criteria are reached
 ```
 
-`hpc/run_free.slurm` runs the free-field seed plus continuation. `hpc/run_quartic.slurm` does the same for the single `Lambda=200` comparison coupling. These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics and selected grid-refinement reruns.
-
-For the 2014 Grandclement, Some, and Gourgoulhon quartic comparison, the paper potential is:
+`hpc/run_free.slurm` runs the free-field seed plus continuation. `hpc/run_quartic.slurm` runs the earlier successful mild self-interaction scan:
 
 ```text
-V = m^2 |Phi|^2 (1 + 2*pi*Lambda*|Phi|^2)
+lambda_4 = 0, 1e-3, 1e-2, 1e-1, 1, 10
 ```
 
-ROTBOSON uses:
+These are intended as the first production-quality sequence jobs, not the older `N=64` smoke tests. Publication use still requires checking convergence diagnostics and selected grid-refinement reruns.
 
-```text
-V = m^2 x + lambda_4*x^2/2,  x=|Phi|^2
-```
-
-With `m=1`, the matching coefficient is `lambda_4 = 4*pi*Lambda`; therefore `Lambda=200` is submitted as `lambda_4=2513.2741228718345`. The Table II targets for `k=1..4` are `Mmax=(3.48, 4.08, 4.81, 5.59)` at `omega=(0.82, 0.80, 0.78, 0.76)`.
+This reverted scan is not the Grandclement et al. 2014 `Lambda=200` Table II run. In this code convention, the Grandclement quartic coefficient would be `lambda_4 = 4*pi*Lambda`, so `Lambda=200` would require `lambda_4=2513.2741228718345`. That high-coupling comparison is deliberately not submitted by the current `run_quartic.slurm`.
 
 By default `CLEAN_OLD_DATA=1`, so every submitted production job deletes old matching solution folders under `out/` before rerunning. To keep existing data, submit with `CLEAN_OLD_DATA=0`.
 
