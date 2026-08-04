@@ -42,6 +42,8 @@ The four jobs are:
 
 The dry-test job runs low-resolution `N=64` free and quartic `lambda_4=1` smoke solves. If both complete, it removes the dry-test parameter files and dry-test solution directories. If it fails, the logs remain for debugging.
 
+The generated dry and production parameter files set `rr_phi_max_maximum=16.0`, matching the outer radius of the configured grids. Larger explicit values are rejected by the ROTBOSON parser.
+
 Each job removes older SLURM logs with its own prefix when it starts, while preserving the current job's active log:
 
 ```text

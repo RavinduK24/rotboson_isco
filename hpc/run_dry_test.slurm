@@ -45,7 +45,7 @@ for PARAM_FILE in "$DRY_PARAM_DIR/free_dry.par" "$DRY_PARAM_DIR/quartic_dry.par"
     printf "max_initial_guess_checks = 8\n"
     printf "norm_f0_target = 1.0E-5\n"
     printf "rr_phi_max_minimum = 1.0\n"
-    printf "rr_phi_max_maximum = 100.0\n"
+    printf "rr_phi_max_maximum = 16.0\n"
   } >> "$PARAM_FILE"
 done
 

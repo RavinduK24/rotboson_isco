@@ -49,7 +49,7 @@ write_sequence_params() {
     printf "max_initial_guess_checks = 8\n"
     printf "norm_f0_target = 1.0E-5\n"
     printf "rr_phi_max_minimum = 1.0\n"
-    printf "rr_phi_max_maximum = 100.0\n"
+    printf "rr_phi_max_maximum = 16.0\n"
   } >> "$seed_par"
 
   sed -E "s/^[[:space:]]*l[[:space:]]*=.*/l = ${ell}/" "$cont_template" \
@@ -63,7 +63,7 @@ write_sequence_params() {
     printf "max_initial_guess_checks = 8\n"
     printf "norm_f0_target = 1.0E-5\n"
     printf "rr_phi_max_minimum = 1.0\n"
-    printf "rr_phi_max_maximum = 100.0\n"
+    printf "rr_phi_max_maximum = 16.0\n"
   } >> "$cont_par"
 
   printf "%s\n%s\n%s\n" "$seed_par" "$cont_par" "$seed_dir"
