@@ -145,7 +145,7 @@ def load_reference(path: Optional[Path]) -> Optional[Dict[str, List[float]]]:
 
 
 def plot_quantity(
-    rows: list[dict[str, Any]],
+    rows: List[Dict[str, Any]],
     x_name: str,
     y_name: str,
     ylabel: str,
