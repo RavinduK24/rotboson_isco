@@ -3,14 +3,12 @@
 Run this from the ROTBOSON directory after the executable has generated
 solution directories under out/.
 """
-from __future__ import annotations
-
 import argparse
 import csv
 import math
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 
 OUTPUT_RE = re.compile(
@@ -28,8 +26,8 @@ def read_first_value(path: Path) -> float:
     return values[0]
 
 
-def read_values(path: Path) -> list[float]:
-    values: list[float] = []
+def read_values(path: Path) -> List[float]:
+    values = []
     with path.open() as f:
         for line in f:
             line = line.strip()
@@ -41,8 +39,8 @@ def read_values(path: Path) -> list[float]:
     return values
 
 
-def read_metadata(path: Path) -> dict[str, str]:
-    metadata: dict[str, str] = {}
+def read_metadata(path: Path) -> Dict[str, str]:
+    metadata = {}
     if not path.exists():
         return metadata
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -53,8 +51,8 @@ def read_metadata(path: Path) -> dict[str, str]:
     return metadata
 
 
-def solution_rows(out_dir: Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
+def solution_rows(out_dir: Path) -> List[Dict[str, Any]]:
+    rows = []
     for child in sorted(out_dir.iterdir()):
         if not child.is_dir():
             continue
@@ -121,7 +119,7 @@ def solution_rows(out_dir: Path) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: (row["potential"], -row["omega"]))
 
 
-def write_summary(rows: list[dict[str, Any]], path: Path) -> None:
+def write_summary(rows: List[Dict[str, Any]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = list(rows[0].keys())
     with path.open("w", newline="") as f:
@@ -130,7 +128,7 @@ def write_summary(rows: list[dict[str, Any]], path: Path) -> None:
         writer.writerows(rows)
 
 
-def load_reference(path: Path | None) -> dict[str, list[float]] | None:
+def load_reference(path: Optional[Path]) -> Optional[Dict[str, List[float]]]:
     if path is None:
         return None
     with path.open(newline="") as f:
@@ -152,7 +150,7 @@ def plot_quantity(
     y_name: str,
     ylabel: str,
     path: Path,
-    reference: dict[str, list[float]] | None,
+    reference: Optional[Dict[str, List[float]]],
 ) -> None:
     import matplotlib
 
