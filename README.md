@@ -18,6 +18,8 @@ cd rotboson_isco
 sbatch hpc/run_build.slurm
 sbatch hpc/run_dry_test.slurm
 sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic_homotopy_low.slurm
+sbatch hpc/run_quartic_homotopy_high.slurm
 sbatch hpc/run_quartic.slurm
 ```
 
@@ -29,12 +31,17 @@ git pull --ff-only origin main
 sbatch hpc/run_build.slurm
 sbatch hpc/run_dry_test.slurm
 sbatch hpc/run_free.slurm
+sbatch hpc/run_quartic_homotopy_low.slurm
+sbatch hpc/run_quartic_homotopy_high.slurm
 sbatch hpc/run_quartic.slurm
 ```
 
 Submit them manually in that order, waiting for each job to finish successfully
-before submitting the next one. The dry-test job removes its successful dry-test
-data, and each job removes older matching SLURM logs when it starts.
+before submitting the next one. Production files are `1-4%2` arrays, matching
+the two-concurrent-job HPC limit and the 72-hour per-task cap. The two homotopy
+stages carry each weak free star to the paper's `Lambda=200` before the final
+quartic amplitude branch. Long stages resume from converged checkpoints after a
+72-hour timeout. See `hpc/README_HPC.md` for reset controls and parameters.
 
 For the separate spherical `l=0` solver:
 

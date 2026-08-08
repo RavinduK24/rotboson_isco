@@ -1,12 +1,13 @@
 #!/bin/bash
 
-#SBATCH --job-name=rotboson_quartic
+#SBATCH --job-name=rotboson_q200
 #SBATCH --partition=h07q2
+#SBATCH --array=1-4%2
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=128G
 #SBATCH --time=72:00:00
-#SBATCH --output=rotboson_quartic_%j.out
-#SBATCH --error=rotboson_quartic_%j.err
+#SBATCH --output=rotboson_q200_%A_%a.out
+#SBATCH --error=rotboson_q200_%A_%a.err
 
 set -euo pipefail
 
@@ -17,41 +18,18 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 ROTBOSON_DIR=$HOME/ROTBOSON_ISCO/ROTBOSON
 RUN_DIR=$ROTBOSON_DIR/out
-SCAN_DIR=$RUN_DIR/hpc_quartic_lambda_4_scan
-COUPLING_VALUES=(
-  "1.0e-3"
-  "1.0e-2"
-  "1.0e-1"
-  "1.0"
-  "10.0"
-  "100.0"
-  "1000.0"
-  "1256.6370614359173"
-  "2513.2741228718345"
-  "1.0e4"
-  "12566.370614359172"
-)
-ELL_VALUES=(1 2 3 4)
-CLEAN_OLD_DATA=${CLEAN_OLD_DATA:-1}
+HOMOTOPY_DIR=$RUN_DIR/hpc_quartic_homotopy
+ELL=${SLURM_ARRAY_TASK_ID:?This file must be submitted with sbatch as an array job}
+SCAN_DIR=$RUN_DIR/hpc_quartic_Lambda_200/l${ELL}
 
 cd "$RUN_DIR"
 source "$ROTBOSON_DIR/hpc/job_utils.sh"
-cleanup_old_slurm_logs "rotboson_quartic" "$ROTBOSON_DIR"
-
-if [ "$CLEAN_OLD_DATA" = "1" ]; then
-  rm -rf "$SCAN_DIR"
-fi
+cleanup_old_slurm_logs "rotboson_q200" "$ROTBOSON_DIR"
 mkdir -p "$SCAN_DIR/params"
 source "$ROTBOSON_DIR/hpc/run_sequence_lib.sh"
 
-for LAMBDA4 in "${COUPLING_VALUES[@]}"; do
-  for ELL in "${ELL_VALUES[@]}"; do
-    LABEL="quartic_lambda_4_$(label_for_value "$LAMBDA4")_l${ELL}"
-
-    echo "============================================================"
-    echo "Running production quartic sequence k=l=$ELL, lambda_4=$LAMBDA4"
-    echo "START_TIME=$(date -Is)"
-    run_sequence "$ROTBOSON_DIR" "quartic" "lambda_4" "$LAMBDA4" "$SCAN_DIR" "$LABEL" "$ELL"
-    echo "END_TIME=$(date -Is)"
-  done
-done
+SOURCE_DIR=$(homotopy_checkpoint "$HOMOTOPY_DIR" "$ELL" 200)
+echo "Running Grandclement Lambda=200 branch k=l=$ELL from $SOURCE_DIR"
+echo "START_TIME=$(date -Is)"
+run_target_quartic_branch "$ROTBOSON_DIR" "$SCAN_DIR" "$ELL" "$SOURCE_DIR"
+echo "END_TIME=$(date -Is)"

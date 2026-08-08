@@ -156,17 +156,20 @@ Result: 7 tests passed.
 Added PolyU-oriented SLURM templates under `external/ROTBOSON/hpc`:
 
 - `external/ROTBOSON/hpc/README_HPC.md`: short build, scan, and ISCO postprocessing instructions for an upload located at `$HOME/ROTBOSON_ISCO/ROTBOSON`.
-- `external/ROTBOSON/hpc/run_build.slurm`: builds the solver with `MKLROOT=$HOME/intel/mkl/2024.1`, `LIBCONFIGROOT=$HOME/local`, and runs `make test-potential`.
+- `external/ROTBOSON/hpc/run_build.slurm`: builds the solver with `MKLROOT=$HOME/intel/mkl/2024.1`, `LIBCONFIGROOT=$HOME/local`, and runs the potential and directional Jacobian tests.
 - `external/ROTBOSON/hpc/run_parameter_scan.slurm`: generic SLURM array template controlled by `SCAN_ROWS`, where each row is `potential coupling_name coupling_value base_parameter_file`. The default table covers the expected initial scan for free, quartic, sextic, axion, solitonic, and KKLS models.
 - `external/ROTBOSON/hpc/run_isco_scan.slurm`: generic ISCO postprocessing template controlled by `RUN_ROOTS`, `RESULT_TAG`, and `EXTRA_ARGS`.
 - Removed the quartic-specific `run_quartic_scan.slurm` and `run_isco_quartic.slurm` templates in favor of the generic files.
 - Updated `run_build.slurm` and `run_parameter_scan.slurm` to use `${LD_LIBRARY_PATH:-}` so `set -u` does not fail on HPC nodes where `LD_LIBRARY_PATH` starts unset.
 - Updated `ROTBOSON_DIR` defaults in all SLURM templates from `$HOME/ROTBOSON/ROTBOSON` to `$HOME/ROTBOSON_ISCO/ROTBOSON` for the planned fresh HPC upload layout.
 
-On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic jobs only. The quartic job now scans direct ROTBOSON `lambda_4` values, while retaining two paper-convention reference values where `lambda_4 = 4*pi*Lambda`:
+On 2026-07-19, replaced the generic array/chunk scan template with one-potential-at-a-time SLURM files for the observed Student HPC limit behavior. The active 2026-08 HPC layout was later narrowed to the free-field and quartic jobs only.
 
-- `external/ROTBOSON/hpc/run_free.slurm`: one free-field run.
-- `external/ROTBOSON/hpc/run_quartic.slurm`: quartic self-interaction scan over `lambda_4 = 1e-3, 1e-2, 1e-1, 1, 10, 100, 1000, 1256.6370614359173, 2513.2741228718345, 1e4, 12566.370614359172`.
+- `external/ROTBOSON/hpc/run_free.slurm`: `l=1..4` free branches with `l`-dependent weak seeds.
+- `external/ROTBOSON/hpc/run_quartic_homotopy_low.slurm`: fixed-field coupling continuation from the free seed through paper `Lambda=100`.
+- `external/ROTBOSON/hpc/run_quartic_homotopy_high.slurm`: checkpointed continuation from paper `Lambda=100` to `Lambda=200`.
+- `external/ROTBOSON/hpc/run_quartic.slurm`: mass-frequency branches at `lambda_4=4*pi*200=2513.2741228718345`.
+- Each production script is a `1-4%2` array so at most two tasks run concurrently and each task remains within the 72-hour scheduler cap.
 - Removed `external/ROTBOSON/hpc/run_parameter_scan.slurm`.
 - Removed inactive axion, KKLS, sextic, and solitonic SLURM entry points from `hpc/` so the active job list matches the current comparison plan.
 

@@ -89,13 +89,17 @@ def solution_rows(out_dir: Path) -> List[Dict[str, Any]]:
         mass = 0.5 * (m_komar_surface + m_komar_volume)
         angular_momentum = 0.5 * (j_komar_surface + j_komar_volume)
         particle_number = j_komar_volume / ell if ell else math.nan
+        phi_max = read_first_value(child / "phi_max.asc")
+        scalar_mass = float(metadata.get("m", "1"))
+        coupling_value = float(metadata.get("coupling_value", "0"))
+        eta_si = coupling_value * phi_max * phi_max / (scalar_mass * scalar_mass)
 
         rows.append(
             {
                 "directory": child.name,
                 "potential": metadata.get("potential", "free"),
                 "coupling_name": metadata.get("coupling_name", "none"),
-                "coupling_value": float(metadata.get("coupling_value", "0")),
+                "coupling_value": coupling_value,
                 "convergence_status": metadata.get("convergence_status", "legacy_unknown"),
                 "ell": ell,
                 "omega": omega,
@@ -111,7 +115,8 @@ def solution_rows(out_dir: Path) -> List[Dict[str, Any]]:
                 "r99": read_first_value(child / "r99.asc"),
                 "GRV2": read_first_value(child / "GRV2.asc"),
                 "GRV3": read_first_value(child / "GRV3.asc"),
-                "phi_max": read_first_value(child / "phi_max.asc"),
+                "phi_max": phi_max,
+                "eta_SI": eta_si,
                 "rr_phi_max": read_first_value(child / "rr_phi_max.asc"),
             }
         )

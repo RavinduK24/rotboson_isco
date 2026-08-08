@@ -24,3 +24,4 @@ cleanup_old_slurm_logs "rotboson_build" "$ROTBOSON_DIR"
 make clean
 make all compiler=gnu
 make test-potential
+make test-jacobian

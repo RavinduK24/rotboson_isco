@@ -40,7 +40,8 @@ static void free_work_arrays(void)
 	SAFE_FREE(Dr_u_aux);
 }
 
-static double check_case(MKL_INT finite_difference_order, MKL_INT type)
+static double check_case(MKL_INT finite_difference_order, MKL_INT type,
+	MKL_INT ell, double quartic_coupling, double scalar_amplitude)
 {
 	const double step = 2.0E-6;
 	MKL_INT i, j, field, index, size;
@@ -59,10 +60,10 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type)
 	size = GNUM * dim + 1;
 	dr = 0.19;
 	dz = 0.17;
-	l = 1;
+	l = ell;
 	m = 1.0;
 	potential_type = type;
-	lambda_4 = 0.7;
+	lambda_4 = quartic_coupling;
 	lambda_6 = 0.5;
 	f_axion = 0.8;
 	sigma_soliton = 1.2;
@@ -96,7 +97,7 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type)
 				case 1: u[index] = -0.01 * envelope; break;
 				case 2: u[index] = 0.01 * envelope; break;
 				case 3: u[index] = 0.015 * envelope; break;
-				case 4: u[index] = 0.08 * envelope; break;
+				case 4: u[index] = scalar_amplitude * envelope; break;
 				default: u[index] = 0.002 * envelope; break;
 				}
 				direction[index] = sin(0.37 * (double)(index + 1));
@@ -137,15 +138,30 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type)
 int main(void)
 {
 	MKL_INT order_value, type;
+	MKL_INT ell;
+	size_t coupling_index;
+	const double strong_quartic[] = {100.0, 500.0, 1000.0, 2513.2741228718345};
+	const double scalar_amplitude[] = {0.0, 8.0E-2, 1.648E-2, 2.616E-3, 3.504E-4};
 	int failures = 0;
 	for (order_value = 2; order_value <= 4; order_value += 2)
 		for (type = POTENTIAL_FREE; type <= POTENTIAL_KKLS; ++type)
 		{
-			double error = check_case(order_value, type);
+			double error = check_case(order_value, type, 1, 0.7, scalar_amplitude[1]);
 			printf("order=%lld potential=%s relative_directional_error=%.6E\n",
 				order_value, potential_name(type), error);
 			if (!isfinite(error) || error > 5.0E-5)
 				++failures;
 		}
+	for (order_value = 2; order_value <= 4; order_value += 2)
+		for (ell = 1; ell <= 4; ++ell)
+			for (coupling_index = 0; coupling_index < sizeof(strong_quartic) / sizeof(strong_quartic[0]); ++coupling_index)
+			{
+				double error = check_case(order_value, POTENTIAL_QUARTIC, ell,
+					strong_quartic[coupling_index], scalar_amplitude[ell]);
+				printf("order=%lld potential=quartic l=%lld lambda_4=%.6E relative_directional_error=%.6E\n",
+					order_value, ell, strong_quartic[coupling_index], error);
+				if (!isfinite(error) || error > 5.0E-5)
+					++failures;
+			}
 	return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

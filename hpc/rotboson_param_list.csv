@@ -1,49 +1,11 @@
-job_script,potential,k_l,paper_target,paper_coupling,code_coupling_name,code_coupling_value,seed_omega,grid,notes
-hpc/run_free.slurm,free,1,free rotating boson-star sequence,Lambda=0,none,0.0,0.95,"N=256, dr=dz=0.0625, order=4","ROTBOSON rotating run; use as the free-field baseline."
-hpc/run_free.slurm,free,2,free rotating boson-star sequence,Lambda=0,none,0.0,0.95,"N=256, dr=dz=0.0625, order=4","ROTBOSON rotating run; use as the free-field baseline."
-hpc/run_free.slurm,free,3,free rotating boson-star sequence,Lambda=0,none,0.0,0.95,"N=256, dr=dz=0.0625, order=4","ROTBOSON rotating run; use as the free-field baseline."
-hpc/run_free.slurm,free,4,free rotating boson-star sequence,Lambda=0,none,0.0,0.95,"N=256, dr=dz=0.0625, order=4","ROTBOSON rotating run; use as the free-field baseline."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1.0e-3,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1.0e-3,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1.0e-3,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1.0e-3,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1.0e-2,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1.0e-2,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1.0e-2,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1.0e-2,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1.0e-1,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1.0e-1,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1.0e-1,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1.0e-1,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,10.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,10.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,10.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,10.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,100.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,100.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,100.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,100.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1000.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1000.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1000.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1000.0,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,Lambda=100,lambda_4,1256.6370614359173,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=100 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,Lambda=100,lambda_4,1256.6370614359173,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=100 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,Lambda=100,lambda_4,1256.6370614359173,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=100 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,Lambda=100,lambda_4,1256.6370614359173,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=100 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,1,"Grandclement et al. 2014 Table II: Mmax=3.48 at omega=0.82",Lambda=200,lambda_4,2513.2741228718345,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=200 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,2,"Grandclement et al. 2014 Table II: Mmax=4.08 at omega=0.80",Lambda=200,lambda_4,2513.2741228718345,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=200 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,3,"Grandclement et al. 2014 Table II: Mmax=4.81 at omega=0.78",Lambda=200,lambda_4,2513.2741228718345,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=200 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,4,"Grandclement et al. 2014 Table II: Mmax=5.59 at omega=0.76",Lambda=200,lambda_4,2513.2741228718345,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=200 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,,lambda_4,1.0e4,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,,lambda_4,1.0e4,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,,lambda_4,1.0e4,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,,lambda_4,1.0e4,0.95,"N=256, dr=dz=0.0625, order=4","Direct code coupling."
-hpc/run_quartic.slurm,quartic,1,direct quartic code-parameter scan,Lambda=1000,lambda_4,12566.370614359172,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=1000 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,2,direct quartic code-parameter scan,Lambda=1000,lambda_4,12566.370614359172,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=1000 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,3,direct quartic code-parameter scan,Lambda=1000,lambda_4,12566.370614359172,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=1000 because lambda_4=4*pi*Lambda."
-hpc/run_quartic.slurm,quartic,4,direct quartic code-parameter scan,Lambda=1000,lambda_4,12566.370614359172,0.95,"N=256, dr=dz=0.0625, order=4","This equals paper Lambda=1000 because lambda_4=4*pi*Lambda."
+stage,job_script,k_l,paper_Lambda,code_lambda_4,seed_omega,psi0,N,dr_dz,outer_radius,scale_next,paper_Mmax,paper_omega,notes
+free,hpc/run_free.slurm,1,0,0,0.95,1.000e-2,256,0.0625,16,1.03,,,Free rotating branch and homotopy source.
+free,hpc/run_free.slurm,2,0,0,0.95,2.060e-3,256,0.0625,16,1.025,,,Free rotating branch and homotopy source.
+free,hpc/run_free.slurm,3,0,0,0.95,3.270e-4,256,0.125,32,1.02,,,Free rotating branch and homotopy source.
+free,hpc/run_free.slurm,4,0,0,0.95,4.380e-5,256,0.125,32,1.015,,,Free rotating branch and homotopy source.
+homotopy-low,hpc/run_quartic_homotopy_low.slurm,1-4,"1;2;5;10;20;40;60;80;100",4*pi*Lambda,from_previous,from_previous,per_l,per_l,per_l,1.0,,,Fixed-field coupling continuation with checkpoints.
+homotopy-high,hpc/run_quartic_homotopy_high.slurm,1-4,"120;140;160;180;200",4*pi*Lambda,from_previous,from_previous,per_l,per_l,per_l,1.0,,,Fixed-field coupling continuation with checkpoints.
+quartic-target,hpc/run_quartic.slurm,1,200,2513.2741228718345,from_checkpoint,from_checkpoint,256,0.0625,16,1.03,3.48,0.82,Grandclement et al. 2014 Table II comparison.
+quartic-target,hpc/run_quartic.slurm,2,200,2513.2741228718345,from_checkpoint,from_checkpoint,256,0.0625,16,1.025,4.08,0.80,Grandclement et al. 2014 Table II comparison.
+quartic-target,hpc/run_quartic.slurm,3,200,2513.2741228718345,from_checkpoint,from_checkpoint,256,0.125,32,1.02,4.81,0.78,Grandclement et al. 2014 Table II comparison.
+quartic-target,hpc/run_quartic.slurm,4,200,2513.2741228718345,from_checkpoint,from_checkpoint,256,0.125,32,1.015,5.59,0.76,Grandclement et al. 2014 Table II comparison.
