@@ -36,6 +36,25 @@ sbatch hpc/run_quartic_homotopy_high.slurm
 sbatch hpc/run_quartic.slurm
 ```
 
+To run the Phase 1-2 free-field literature validation instead, use the
+dependency-aware submission helper:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+git pull --ff-only origin main
+bash hpc/submit_free_validation.sh --ell 1 --dry-run
+bash hpc/submit_free_validation.sh --ell 1
+```
+
+This validates the `l=1` fundamental configurations at `omega=0.995`, `0.9`,
+and `0.8`, plus the difficult third-branch `omega=0.9` configuration. It runs
+the full resolution/domain matrix and writes CSV, JSON, and Markdown reports
+under `validation/results/l1/reports/`. All work is isolated from ordinary
+`out/` runs and resumes from validated checkpoints. The optional nonrotating
+route is explicit: `bash hpc/submit_free_validation.sh --ell 0`; it is never
+submitted by the default rotating workflow. See
+`docs/literature_validation.md` and `hpc/README_HPC.md`.
+
 Submit them manually in that order, waiting for each job to finish successfully
 before submitting the next one. Production files are `1-4%2` arrays, matching
 the two-concurrent-job HPC limit and the 72-hour per-task cap. The two homotopy
@@ -115,6 +134,7 @@ In the configured Linux oneMKL/libconfig environment:
 ```bash
 make test-potential
 make test-jacobian
+python3 -m unittest tests/test_literature_validation.py
 ```
 
 `test-potential` checks analytic first and second derivatives and weak-field limits. `test-jacobian` compares `J v` with a centered directional finite difference for orders 2 and 4 and all six potential types; the fourth-order grid exercises the `cc`, `cs`, `sc`, and `ss` CSR paths.

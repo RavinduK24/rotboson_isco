@@ -177,3 +177,32 @@ Also applied the two C fixes that were required during the first HPC build attem
 
 - `external/ROTBOSON/src/analysis.c`: removed duplicate `V_val`, `dV_val`, `d2V_val` declaration in `ex_analysis`.
 - `external/ROTBOSON/src/rhs_vars.c`: added `extern` declarations for potential selector and coupling globals used by `compute_potential`.
+
+## Phase 1-2 Literature Validation Workflow (2026-10-02)
+
+- Added `validation/benchmarks.json` with the free `l=1` fundamental and third-
+  branch reference configurations, the complete resolution/domain matrix,
+  precision flags, identity windows, acceptance limits, the optional spherical
+  sequence targets, and data-driven continuation profiles.
+- Added `docs/literature_validation.md` to freeze units, harmonic and coordinate
+  conventions, mass/angular-momentum definitions, branch identification,
+  radius terminology, literature provenance, and the paper-to-code quartic
+  coupling conversion.
+- Added `hpc/submit_free_validation.sh` and staged SLURM jobs for the build
+  gate, fundamental continuation, frequency-minimum/third-branch continuation,
+  exact-frequency solves, convergence re-solves, and final reports. The
+  rotating default is `--ell 1`; explicit `--ell 0` dispatches to SPHBOSON.
+- Added `hpc/validation_lib.sh` with isolated attempt directories, atomic
+  checkpoint pointers, single-step fixed-field continuation, adaptive retry,
+  interpolation across grids, exact-frequency scaling, nonvacuum checks, and
+  branch-aware seed selection. Ordinary `out/` results are never modified.
+- Added `scripts/validate_boson_stars.py` to parse the manifest and solver
+  products, detect turning points, preserve branch identity, evaluate all
+  acceptance rules and convergence trends, and emit CSV/JSON/Markdown reports.
+- Added `tests/test_literature_validation.py` covering manifest contracts,
+  branch and turning-point logic, exact seed selection, tolerance boundaries,
+  report generation, and checkpoint resume validation.
+- Added `Noether_charge.asc` and `final_residual.asc` to every ROTBOSON
+  solution so the report records `Q`, the `J=lQ` consistency check, and a
+  solver-independent norm of the final six-equation residual even when the
+  error-based Newton algorithm does not write `norm_f.asc`.

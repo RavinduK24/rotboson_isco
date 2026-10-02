@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "description": "Phase 1-2 free-field boson-star equilibrium validation targets",
+  "conventions": {
+    "units": "G=c=hbar=mu=1",
+    "scalar_harmonic": "Phi=phi(r,theta) exp(i(ell*varphi-omega*t))",
+    "coordinates": "quasi-isotropic",
+    "quartic_conversion": "lambda_4=4*pi*Lambda for V=m^2*x+lambda_4*x^2/2"
+  },
+  "acceptance": {
+    "omega_absolute": 1e-10,
+    "strict_relative": 1e-3,
+    "rounded_relative": 1e-2,
+    "central_lapse_relative": 1e-2,
+    "central_lapse_absolute": 1e-6,
+    "surface_volume_relative": 1e-4,
+    "j_equals_ell_q_relative": 1e-4,
+    "minimum_mass": 1e-10,
+    "minimum_field": 1e-10
+  },
+  "solvers": {
+    "rotboson": {"ell_min": 1, "path": "."},
+    "sphboson": {"ell_min": 0, "ell_max": 0, "path": "sphboson"}
+  },
+  "continuation_profiles": [
+    {
+      "ell": 1,
+      "n": 256,
+      "r_max": 16.0,
+      "seed_omega": 0.95,
+      "seed_psi0": 0.01,
+      "initial_amplitude_increment": 0.03,
+      "minimum_amplitude_increment": 0.001
+    }
+  ],
+  "targets": [
+    {
+      "id": "l1_w0995_fundamental",
+      "enabled_default": true,
+      "solver": "rotboson",
+      "ell": 1,
+      "potential": "free",
+      "omega": 0.995,
+      "branch": "fundamental",
+      "literature": {"mass": 0.293588605, "angular_momentum": 0.294076224, "minus_gtt_origin": 0.983680641},
+      "strict": ["mass", "angular_momentum", "minus_gtt_origin"],
+      "identity_window": {"mass_relative": 0.25, "minus_gtt_origin_relative": 0.5},
+      "source": "Gervalle et al. (2026), arXiv:2609.24913",
+      "production_grid": "R64_N256",
+      "grids": [
+        {"id": "R64_N128", "series": "resolution", "n": 128, "r_max": 64.0},
+        {"id": "R64_N192", "series": "resolution", "n": 192, "r_max": 64.0},
+        {"id": "R64_N256", "series": "resolution,boundary", "n": 256, "r_max": 64.0},
+        {"id": "R32_N128", "series": "boundary", "n": 128, "r_max": 32.0},
+        {"id": "R48_N192", "series": "boundary", "n": 192, "r_max": 48.0}
+      ]
+    },
+    {
+      "id": "l1_w0800_fundamental",
+      "enabled_default": true,
+      "solver": "rotboson",
+      "ell": 1,
+      "potential": "free",
+      "omega": 0.8,
+      "branch": "fundamental",
+      "literature": {"mass": 1.307785917, "angular_momentum": 1.371813099, "minus_gtt_origin": 0.419928161},
+      "strict": ["mass", "angular_momentum", "minus_gtt_origin"],
+      "identity_window": {"mass_relative": 0.25, "minus_gtt_origin_relative": 0.5},
+      "source": "Gervalle et al. (2026), arXiv:2609.24913",
+      "production_grid": "R16_N256",
+      "grids": [
+        {"id": "R16_N128", "series": "resolution", "n": 128, "r_max": 16.0},
+        {"id": "R16_N192", "series": "resolution,boundary", "n": 192, "r_max": 16.0},
+        {"id": "R16_N256", "series": "resolution", "n": 256, "r_max": 16.0},
+        {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
+        {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
+      ]
+    },
+    {
+      "id": "l1_w0900_fundamental",
+      "enabled_default": true,
+      "solver": "rotboson",
+      "ell": 1,
+      "potential": "free",
+      "omega": 0.9,
+      "branch": "fundamental",
+      "literature": {"mass": 1.1186, "angular_momentum": 1.15241594916},
+      "strict": [],
+      "rounded": ["mass"],
+      "informational": ["angular_momentum"],
+      "identity_window": {"mass_relative": 0.25},
+      "precision": "Values are rounded from M=1.1186 and J/M^2=0.9210; they are not eight-digit references.",
+      "source": "Meliani et al. (2015), arXiv:1510.04191",
+      "production_grid": "R16_N256",
+      "grids": [
+        {"id": "R16_N128", "series": "resolution", "n": 128, "r_max": 16.0},
+        {"id": "R16_N192", "series": "resolution,boundary", "n": 192, "r_max": 16.0},
+        {"id": "R16_N256", "series": "resolution", "n": 256, "r_max": 16.0},
+        {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
+        {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
+      ]
+    },
+    {
+      "id": "l1_w0900_third",
+      "enabled_default": true,
+      "solver": "rotboson",
+      "ell": 1,
+      "potential": "free",
+      "omega": 0.9,
+      "branch": "third",
+      "literature": {"mass": 0.69825736, "angular_momentum": 0.46023156, "minus_gtt_origin": 0.000158039},
+      "strict": ["mass", "angular_momentum", "minus_gtt_origin"],
+      "identity_window": {"mass_absolute": 0.2, "minus_gtt_origin_max": 0.01},
+      "source": "Gervalle et al. (2026), arXiv:2609.24913",
+      "production_grid": "R16_N256",
+      "grids": [
+        {"id": "R16_N128", "series": "resolution", "n": 128, "r_max": 16.0},
+        {"id": "R16_N192", "series": "resolution,boundary", "n": 192, "r_max": 16.0},
+        {"id": "R16_N256", "series": "resolution", "n": 256, "r_max": 16.0},
+        {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
+        {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
+      ]
+    }
+  ],
+  "sequence_targets": [
+    {
+      "id": "l0_free_sequence",
+      "enabled_default": false,
+      "solver": "sphboson",
+      "ell": 0,
+      "potential": "free",
+      "literature": {"maximum_mass": 0.63300, "minimum_omega": 0.76754},
+      "source": "Ontanon and Alcubierre (2021), arXiv:2103.13993"
+    }
+  ]
+}

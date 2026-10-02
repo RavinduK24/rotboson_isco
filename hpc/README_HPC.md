@@ -6,6 +6,85 @@ The scripts assume the checkout is:
 $HOME/ROTBOSON_ISCO/ROTBOSON
 ```
 
+## Phase 1-2 literature validation
+
+The validation workflow is separate from the self-interaction production
+scans below. Preview the exact jobs, dependencies, arrays, resources, targets,
+and output locations without contacting SLURM:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+bash hpc/submit_free_validation.sh --ell 1 --dry-run
+```
+
+Submit the complete rotating validation with:
+
+```bash
+bash hpc/submit_free_validation.sh --ell 1
+```
+
+The helper submits this `afterok` chain:
+
+1. build plus `make test-potential`, `make test-jacobian`, and Python tests;
+2. weak/fundamental `l=1` continuation;
+3. adaptive continuation through the frequency minimum until the rising third
+   branch brackets `omega=0.9`;
+4. a four-element exact-frequency array (`%2` concurrency);
+5. a 16-element interpolation/re-solve array (`%2` concurrency);
+6. CSV, JSON, and Markdown report generation.
+
+Every task requests partition `h07q2`, 4 CPUs, 128 GB, and 72 hours. The four
+exact solves provide the production-grid member of each five-grid matrix, so
+the convergence array does not repeat them. The generated tree is:
+
+```text
+validation/results/
+  logs/
+  l1/
+    params/          generated parameter files
+    work/            isolated solver attempts, including rejected attempts
+    state/           branch index and accepted checkpoint pointers
+    reports/         validation_report.{csv,json,md}
+```
+
+No validation stage deletes or writes solution directories in `out/`. A rerun
+checks each pointer and reuses only converged, nonvacuum solutions with the
+right target identity. Failed continuation steps halve the scalar-amplitude
+increment down to `0.001`. If a 72-hour allocation or the per-invocation step
+guard is reached, run the same submission command again; completed stages are
+cheap validation checks and the incomplete stage continues from its last
+accepted branch point. Set `VALIDATION_MAX_STEPS` only when debugging.
+
+The optional spherical sequence is deliberately separate and explicit:
+
+```bash
+bash hpc/submit_free_validation.sh --ell 0 --dry-run
+bash hpc/submit_free_validation.sh --ell 0
+```
+
+This routes to the bundled SPHBOSON solver and writes beneath
+`validation/results/l0/`; no `l=0` job is included in `--ell 1`. The manifest is
+`validation/benchmarks.json`, while conventions, branch definitions, coupling
+conversion, and literature provenance are fixed in
+`docs/literature_validation.md`.
+
+The driver is data-driven for future rotating harmonics. Once literature
+targets, grids, and a continuation profile for a new `ell` are added to the
+manifest, the same `--ell INTEGER` interface derives its target and grid-array
+sizes automatically.
+
+Useful monitoring commands are:
+
+```bash
+squeue -u $USER
+sacct -j JOBID --format=JobID,JobName,State,ExitCode,Elapsed,MaxRSS
+tail -f validation/results/logs/third_branch_JOBID.out
+```
+
+The report job exits nonzero when an acceptance rule fails. That is a numerical
+validation result, not a report-generation failure; inspect the Markdown
+report for explicit reasons.
+
 This workflow is limited to rotating `l=k=1,2,3,4` free-field models and the
 Grandclement et al. (2014) quartic benchmark at paper coupling `Lambda=200`.
 ROTBOSON uses `lambda_4=4*pi*Lambda`, so the benchmark coupling is:

@@ -611,6 +611,8 @@ int main(int argc, char *argv[])
 		f_norms[3] = norm2(f[k] + 3 * dim);
 		f_norms[4] = norm2(f[k] + 4 * dim);
 		f_norms[5] = norm2(f[k] + 5 * dim);
+		double final_residual = norm2_all_variables(f[k]);
+		write_single_file_1d(&final_residual, "final_residual.asc", 1);
 		printf("***                                                \n");
 		printf("***        FINAL ITERATION:                        \n");
 		printf("***           || f0 ||   = %-12.10E           \n", f_norms[0]);

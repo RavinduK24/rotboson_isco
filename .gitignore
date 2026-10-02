@@ -22,5 +22,6 @@ __pycache__/
 VSC_Workspace
 .vscode/c_cpp_properties.json
 *.json
+!validation/*.json
 *.cfg
 *.swp
