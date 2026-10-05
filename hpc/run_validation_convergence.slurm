@@ -19,9 +19,11 @@ VALIDATION_ROOT=${VALIDATION_ROOT:-$ROTBOSON_DIR/validation/results}
 export ROTBOSON_DIR VALIDATION_ROOT
 source "$ROTBOSON_DIR/hpc/validation_lib.sh"
 ell=${VALIDATION_ELL:-1}
-mapfile -t matrix < <(validation_python matrix --ell "$ell" --exclude-production)
+potential=${VALIDATION_POTENTIAL:-free}
+mapfile -t matrix < <(validation_python matrix --ell "$ell" --potential "$potential" --exclude-production)
 row=${matrix[${SLURM_ARRAY_TASK_ID:?submit as an array job}]:-}
 [ -n "$row" ] || { echo "ERROR: no convergence case at array index $SLURM_ARRAY_TASK_ID" >&2; exit 2; }
-IFS=$'\t' read -r target_id grid_id n r_max omega branch <<< "$row"
+IFS=$'\t' read -r target_id grid_id n r_max omega branch target_potential coupling_name coupling_value <<< "$row"
 echo "Convergence target=$target_id grid=$grid_id N=$n Rmax=$r_max"
-run_convergence_target "$ell" "$target_id" "$grid_id" "$n" "$r_max" "$omega"
+run_convergence_target "$ell" "$target_id" "$grid_id" "$n" "$r_max" "$omega" \
+  "$target_potential" "$coupling_name" "$coupling_value"

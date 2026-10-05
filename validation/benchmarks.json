@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Phase 1-2 free-field boson-star equilibrium validation targets",
+  "description": "Rotating boson-star equilibrium validation targets for free and self-interacting fields",
   "conventions": {
     "units": "G=c=hbar=mu=1",
     "scalar_harmonic": "Phi=phi(r,theta) exp(i(ell*varphi-omega*t))",
@@ -15,6 +15,7 @@
     "central_lapse_absolute": 1e-6,
     "surface_volume_relative": 1e-4,
     "j_equals_ell_q_relative": 1e-4,
+    "coupling_relative": 1e-10,
     "minimum_mass": 1e-10,
     "minimum_field": 1e-10
   },
@@ -120,6 +121,48 @@
         {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
         {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
       ]
+    },
+    {
+      "id": "l1_quartic_L200_w0820_fundamental",
+      "enabled_default": false,
+      "solver": "rotboson",
+      "ell": 1,
+      "potential": "quartic",
+      "coupling": {
+        "paper_name": "Lambda",
+        "paper_value": 200.0,
+        "code_name": "lambda_4",
+        "code_value": 2513.2741228718345
+      },
+      "omega": 0.82,
+      "branch": "fundamental",
+      "literature": {"mass": 3.48},
+      "strict": [],
+      "rounded": ["mass"],
+      "identity_window": {"mass_relative": 0.2},
+      "precision": "Table II reports the maximum as M=3.48 at omega=0.82; both values are rounded, so this target is a precision-aware point near the sequence maximum.",
+      "source": "Grandclement, Some and Gourgoulhon (2014), arXiv:1405.4837, Table II",
+      "production_grid": "R16_N256",
+      "grids": [
+        {"id": "R16_N128", "series": "resolution", "n": 128, "r_max": 16.0},
+        {"id": "R16_N192", "series": "resolution,boundary", "n": 192, "r_max": 16.0},
+        {"id": "R16_N256", "series": "resolution", "n": 256, "r_max": 16.0},
+        {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
+        {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
+      ]
+    }
+  ],
+  "coupling_scans": [
+    {
+      "id": "l1_quartic_homotopy",
+      "ell": 1,
+      "potential": "quartic",
+      "paper_coupling_name": "Lambda",
+      "code_coupling_name": "lambda_4",
+      "conversion_factor": 12.566370614359172,
+      "paper_values": [1, 2, 5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200],
+      "checkpoint_template": "hpc_quartic_homotopy/checkpoints/l{ell}/Lambda_{paper_value}.path",
+      "source": "Grandclement, Some and Gourgoulhon (2014) coupling convention; intermediate rows are numerical continuation checks, not tabulated literature observables."
     }
   ],
   "sequence_targets": [

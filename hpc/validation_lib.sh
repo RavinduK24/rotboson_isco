@@ -81,6 +81,9 @@ write_seeded_params() {
   local r_max="$5"
   local mode="$6"
   local value="$7"
+  local potential="${8:-free}"
+  local coupling_name="${9:-none}"
+  local coupling_value="${10:-0.0}"
   local source_n source_dr source_omega dr read_mode
   source_n=$(metadata_value "$source_dir" NrInterior)
   source_dr=$(metadata_value "$source_dir" dr)
@@ -136,7 +139,10 @@ write_seeded_params() {
     echo 'scale_u5 = 1.0'
     echo "l = ${ell}"
     echo 'm = 1.0'
-    echo 'potential = "free"'
+    echo "potential = \"${potential}\""
+    if [ "$coupling_name" != "none" ]; then
+      echo "${coupling_name} = ${coupling_value}"
+    fi
     echo 'sweep = 0'
     echo 'scale_next = 1.0'
     echo 'hwl_max = 100000'
@@ -276,6 +282,8 @@ run_branch_phase() {
 
 run_exact_target() {
   local ell="$1" target_id="$2" omega="$3" branch="$4" n="$5" r_max="$6"
+  local potential="${7:-free}" coupling_name="${8:-none}" coupling_value="${9:-0.0}"
+  local seed_root="${10:-}"
   local root="$VALIDATION_ROOT/l${ell}" index="$VALIDATION_ROOT/l${ell}/state/branch/index.tsv"
   local pointer="$root/state/exact/${target_id}.path" source parameter attempt
   mkdir -p "$(dirname "$pointer")" "$root/params/exact" "$root/work/exact"
@@ -283,10 +291,19 @@ run_exact_target() {
     echo "Reusing exact checkpoint $target_id"
     return 0
   fi
-  source=$(validation_python select-seed --index "$index" --omega "$omega" --branch "$branch")
+  if [ "$potential" = "free" ]; then
+    source=$(validation_python select-seed --index "$index" --omega "$omega" --branch "$branch")
+  else
+    [ -n "$seed_root" ] || {
+      echo "ERROR: interacting target $target_id requires a seed root" >&2
+      return 2
+    }
+    source=$(validation_python select-output-seed --root "$seed_root" --target-id "$target_id")
+  fi
   parameter="$root/params/exact/${target_id}.par"
   attempt="$root/work/exact/${target_id}"
-  write_seeded_params "$parameter" "$source" "$ell" "$n" "$r_max" omega "$omega"
+  write_seeded_params "$parameter" "$source" "$ell" "$n" "$r_max" omega "$omega" \
+    "$potential" "$coupling_name" "$coupling_value"
   run_validation_attempt "$parameter" "$attempt" "$target_id"
   write_validation_pointer "$pointer" "$VALIDATION_SOLUTION"
   echo "Accepted exact solution $target_id: $VALIDATION_SOLUTION"
@@ -294,6 +311,7 @@ run_exact_target() {
 
 run_convergence_target() {
   local ell="$1" target_id="$2" grid_id="$3" n="$4" r_max="$5" omega="$6"
+  local potential="${7:-free}" coupling_name="${8:-none}" coupling_value="${9:-0.0}"
   local root="$VALIDATION_ROOT/l${ell}"
   local source_pointer="$root/state/exact/${target_id}.path"
   local pointer="$root/state/convergence/${target_id}/${grid_id}.path"
@@ -310,7 +328,8 @@ run_convergence_target() {
   source=$(validation_solution_from_pointer "$source_pointer")
   parameter="$root/params/convergence/$target_id/${grid_id}.par"
   attempt="$root/work/convergence/$target_id/${grid_id}"
-  write_seeded_params "$parameter" "$source" "$ell" "$n" "$r_max" omega "$omega"
+  write_seeded_params "$parameter" "$source" "$ell" "$n" "$r_max" omega "$omega" \
+    "$potential" "$coupling_name" "$coupling_value"
   run_validation_attempt "$parameter" "$attempt" "$target_id"
   write_validation_pointer "$pointer" "$VALIDATION_SOLUTION"
   echo "Accepted convergence solution $target_id/$grid_id: $VALIDATION_SOLUTION"

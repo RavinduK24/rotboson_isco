@@ -8,9 +8,8 @@ $HOME/ROTBOSON_ISCO/ROTBOSON
 
 ## Phase 1-2 literature validation
 
-The validation workflow is separate from the self-interaction production
-scans below. Preview the exact jobs, dependencies, arrays, resources, targets,
-and output locations without contacting SLURM:
+Preview the free-field jobs, dependencies, arrays, resources, targets, and
+output locations without contacting SLURM:
 
 ```bash
 cd $HOME/ROTBOSON_ISCO/ROTBOSON
@@ -84,6 +83,51 @@ tail -f validation/results/logs/third_branch_JOBID.out
 The report job exits nonzero when an acceptance rule fails. That is a numerical
 validation result, not a report-generation failure; inspect the Markdown
 report for explicit reasons.
+
+## Rotating quartic validation
+
+The interacting driver submits only `l=1` and automatically chains the existing
+production continuation into the literature checks:
+
+```bash
+cd $HOME/ROTBOSON_ISCO/ROTBOSON
+bash hpc/submit_interacting_validation.sh --ell 1 --dry-run
+bash hpc/submit_interacting_validation.sh --ell 1
+```
+
+The dependency chain is:
+
+1. build and regression tests;
+2. free weak seed and branch for `l=1`;
+3. fixed-field quartic homotopy through `Lambda=1..100`;
+4. homotopy through `Lambda=120..200`;
+5. the `Lambda=200` amplitude branch through an internal mass maximum;
+6. an exact solve at the rounded literature frequency `omega=0.82`;
+7. four additional resolution/domain solves;
+8. equilibrium, coupling-homotopy, and sequence-maximum reports.
+
+The solver convention is `lambda_4=4*pi*Lambda`, so `Lambda=200` becomes
+`lambda_4=2513.2741228718345`. The exact/grid work is isolated under:
+
+```text
+validation/results/interacting/quartic_Lambda_200/l1/
+  params/
+  work/
+  state/
+  reports/
+```
+
+The report directory contains three report families in CSV/JSON/Markdown:
+
+- `validation_report`: the exact `omega=0.82` five-grid matrix;
+- `coupling_validation_report`: every `Lambda=1..200` homotopy checkpoint;
+- `sequence_peak_validation_report`: the sampled `Mmax` and its frequency.
+
+The last two read the established production checkpoints beneath `out/`.
+Intermediate couplings are tested for solver, coupling, physical consistency,
+and continuation continuity; they are not labeled as precise literature
+observables. The quantitative literature comparison is the rounded Table II
+target `Mmax=3.48`, `omega=0.82` at `l=1`, `Lambda=200`.
 
 This workflow is limited to rotating `l=k=1,2,3,4` free-field models and the
 Grandclement et al. (2014) quartic benchmark at paper coupling `Lambda=200`.

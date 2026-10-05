@@ -55,6 +55,21 @@ route is explicit: `bash hpc/submit_free_validation.sh --ell 0`; it is never
 submitted by the default rotating workflow. See
 `docs/literature_validation.md` and `hpc/README_HPC.md`.
 
+For the rotating quartic self-interaction validation, including the full
+`Lambda=1..200` coupling homotopy, the `Lambda=200` sequence maximum, and an
+exact-frequency convergence matrix at the rounded literature value
+`omega=0.82`, use:
+
+```bash
+bash hpc/submit_interacting_validation.sh --ell 1 --dry-run
+bash hpc/submit_interacting_validation.sh --ell 1
+```
+
+The interacting reports are written beneath
+`validation/results/interacting/quartic_Lambda_200/l1/reports/`. Intermediate
+couplings are continuation/consistency checks; only the registered
+`Lambda=200` maximum is treated as a quantitative literature benchmark.
+
 Submit them manually in that order, waiting for each job to finish successfully
 before submitting the next one. Production files are `1-4%2` arrays, matching
 the two-concurrent-job HPC limit and the 72-hour per-task cap. The two homotopy

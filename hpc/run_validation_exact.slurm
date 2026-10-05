@@ -19,9 +19,12 @@ VALIDATION_ROOT=${VALIDATION_ROOT:-$ROTBOSON_DIR/validation/results}
 export ROTBOSON_DIR VALIDATION_ROOT
 source "$ROTBOSON_DIR/hpc/validation_lib.sh"
 ell=${VALIDATION_ELL:-1}
-mapfile -t targets < <(validation_python targets --ell "$ell")
+potential=${VALIDATION_POTENTIAL:-free}
+seed_root=${VALIDATION_SEED_ROOT:-$ROTBOSON_DIR/out}
+mapfile -t targets < <(validation_python targets --ell "$ell" --potential "$potential")
 row=${targets[${SLURM_ARRAY_TASK_ID:?submit as an array job}]:-}
 [ -n "$row" ] || { echo "ERROR: no target at array index $SLURM_ARRAY_TASK_ID" >&2; exit 2; }
-IFS=$'\t' read -r target_id omega branch n r_max grid_id <<< "$row"
-echo "Exact target=$target_id omega=$omega branch=$branch grid=$grid_id"
-run_exact_target "$ell" "$target_id" "$omega" "$branch" "$n" "$r_max"
+IFS=$'\t' read -r target_id omega branch n r_max grid_id target_potential coupling_name coupling_value <<< "$row"
+echo "Exact target=$target_id potential=$target_potential $coupling_name=$coupling_value omega=$omega branch=$branch grid=$grid_id"
+run_exact_target "$ell" "$target_id" "$omega" "$branch" "$n" "$r_max" \
+  "$target_potential" "$coupling_name" "$coupling_value" "$seed_root"

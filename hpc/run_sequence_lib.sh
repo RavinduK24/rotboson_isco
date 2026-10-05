@@ -468,7 +468,7 @@ run_target_quartic_branch() {
   if [ ! -f "$initialized" ]; then
     pattern=$(solution_family_pattern "quartic" "lambda_4" "$target_lambda4" "$ell")
     while IFS= read -r directory; do
-      if [ "$(basename "$directory")" != "$source_dir" ]; then
+      if [ "$directory" != "$source_dir" ]; then
         rm -rf "$directory"
       fi
     done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print)

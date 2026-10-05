@@ -32,15 +32,21 @@ def make_solution(
     target: dict,
     grid: dict,
     observable_error: float = 1.0e-5,
+    omega: float | None = None,
 ) -> None:
     directory.mkdir(parents=True)
     mass = target["literature"]["mass"] * (1.0 + observable_error)
-    angular = target["literature"]["angular_momentum"] * (1.0 + observable_error)
+    angular = target["literature"].get("angular_momentum", mass) * (1.0 + observable_error)
+    coupling = target.get("coupling", {})
     dr = grid["r_max"] / grid["n"]
     (directory / "run_metadata.txt").write_text(
         "\n".join((
-            "format_version=1", "potential=free", "convergence_status=converged",
-            "error_code=0", f"l={target['ell']}", f"omega={target['omega']:.17E}",
+            "format_version=1", f"potential={target['potential']}",
+            f"coupling_name={coupling.get('code_name', 'none')}",
+            f"coupling_value={coupling.get('code_value', 0.0):.17E}",
+            f"lambda_4={coupling.get('code_value', 0.0):.17E}",
+            "convergence_status=converged",
+            "error_code=0", f"l={target['ell']}", f"omega={(target['omega'] if omega is None else omega):.17E}",
             f"dr={dr:.17E}", f"NrInterior={grid['n']}",
             f"M_Komar={mass:.17E}", f"J_Komar={angular:.17E}",
             "GRV2=1.0E-8", "GRV3=1.0E-8",
@@ -65,7 +71,7 @@ def make_solution(
 class ManifestTests(unittest.TestCase):
     def test_manifest_parses_and_routes_solvers(self) -> None:
         manifest = validation.load_manifest()
-        self.assertEqual(len(manifest["targets"]), 4)
+        self.assertEqual(len(manifest["targets"]), 5)
         self.assertEqual({target["solver"] for target in manifest["targets"]}, {"rotboson"})
         self.assertEqual(manifest["sequence_targets"][0]["solver"], "sphboson")
         self.assertFalse(manifest["sequence_targets"][0]["enabled_default"])
@@ -73,12 +79,20 @@ class ManifestTests(unittest.TestCase):
 
     def test_grid_matrix_has_four_targets_and_sixteen_extra_solves(self) -> None:
         manifest = validation.load_manifest()
-        targets = [target for target in manifest["targets"] if target["ell"] == 1]
+        targets = validation.filtered_targets(manifest, 1, "free")
         self.assertEqual(len(targets), 4)
         self.assertEqual(sum(len(target["grids"]) - 1 for target in targets), 16)
         profile = next(item for item in manifest["continuation_profiles"] if item["ell"] == 1)
         self.assertEqual(profile["n"], 256)
         self.assertEqual(profile["r_max"], 16.0)
+
+    def test_quartic_target_and_homotopy_are_registered(self) -> None:
+        manifest = validation.load_manifest()
+        targets = validation.filtered_targets(manifest, 1, "quartic")
+        self.assertEqual(len(targets), 1)
+        self.assertAlmostEqual(targets[0]["coupling"]["code_value"], 4.0 * math.pi * 200.0)
+        scan = validation.coupling_scan_by_id(manifest, "l1_quartic_homotopy")
+        self.assertEqual(scan["paper_values"][-1], 200)
 
 
 class BranchTests(unittest.TestCase):
@@ -138,6 +152,30 @@ class SolutionAndReportTests(unittest.TestCase):
         self.assertFalse(passed)
         self.assertIn("mass_literature_tolerance", reasons)
 
+    def test_interacting_identity_rejects_wrong_potential_and_coupling(self) -> None:
+        manifest = validation.load_manifest()
+        target = validation.target_by_id(manifest, "l1_quartic_L200_w0820_fundamental")
+        solution = {
+            "ell": 1, "omega": 0.82, "mass_komar": 3.48,
+            "potential": "free", "coupling_name": "none", "coupling_value": 0.0,
+        }
+        issues = validation.identity_issues(solution, target)
+        self.assertIn("wrong_potential", issues)
+        self.assertIn("wrong_coupling_name", issues)
+        self.assertIn("wrong_coupling_value", issues)
+
+    def test_selects_correct_interacting_seed(self) -> None:
+        manifest = validation.load_manifest()
+        target = validation.target_by_id(manifest, "l1_quartic_L200_w0820_fundamental")
+        grid = next(grid for grid in target["grids"] if grid["id"] == target["production_grid"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            farther = root / "pot=quartic,farther"
+            nearer = root / "pot=quartic,nearer"
+            make_solution(farther, target, grid, omega=0.84)
+            make_solution(nearer, target, grid, omega=0.821)
+            self.assertEqual(validation.select_output_seed(root, target), nearer.resolve())
+
     def test_report_generation_and_convergence_trends(self) -> None:
         full_manifest = validation.load_manifest()
         target = dict(full_manifest["targets"][0])
@@ -168,6 +206,52 @@ class SolutionAndReportTests(unittest.TestCase):
             self.assertTrue((output / "validation_report.csv").exists())
             self.assertTrue(json.loads((output / "validation_report.json").read_text(encoding="utf-8"))["overall_pass"])
             self.assertIn("Overall: **PASS**", (output / "validation_report.md").read_text(encoding="utf-8"))
+
+    def test_coupling_report_checks_every_homotopy_checkpoint(self) -> None:
+        manifest = validation.load_manifest()
+        base_target = validation.target_by_id(manifest, "l1_quartic_L200_w0820_fundamental")
+        grid = next(grid for grid in base_target["grids"] if grid["id"] == base_target["production_grid"])
+        scan = validation.coupling_scan_by_id(manifest, "l1_quartic_homotopy")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint_root = root / "hpc_quartic_homotopy" / "checkpoints" / "l1"
+            checkpoint_root.mkdir(parents=True)
+            for paper_value in scan["paper_values"]:
+                target = dict(base_target)
+                target["coupling"] = dict(base_target["coupling"])
+                target["coupling"]["code_value"] = scan["conversion_factor"] * paper_value
+                solution = root / "solutions" / f"Lambda_{paper_value}"
+                make_solution(solution, target, grid)
+                (checkpoint_root / f"Lambda_{paper_value}.path").write_text(
+                    str(solution) + "\n", encoding="utf-8"
+                )
+            report = validation.build_coupling_report(manifest, scan, root)
+            self.assertTrue(report["overall_pass"], report)
+            self.assertEqual(len(report["rows"]), len(scan["paper_values"]))
+
+    def test_sequence_peak_report_finds_internal_literature_maximum(self) -> None:
+        manifest = validation.load_manifest()
+        target = validation.target_by_id(manifest, "l1_quartic_L200_w0820_fundamental")
+        grid = next(grid for grid in target["grids"] if grid["id"] == target["production_grid"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            samples = (
+                ("pot=quartic,step=0", 0.90, 3.30, 0.08),
+                ("pot=quartic,step=1", 0.82, 3.48, 0.10),
+                ("pot=quartic,step=2", 0.76, 3.40, 0.12),
+            )
+            for name, omega, mass, phi_max in samples:
+                solution = root / name
+                make_solution(
+                    solution, target, grid,
+                    observable_error=mass / target["literature"]["mass"] - 1.0,
+                    omega=omega,
+                )
+                write_values(solution / "phi_max.asc", phi_max)
+            report = validation.build_sequence_peak_report(manifest, target, root)
+            self.assertTrue(report["overall_pass"], report)
+            self.assertAlmostEqual(report["sampled_mass_maximum"], 3.48)
+            self.assertAlmostEqual(report["sampled_omega_at_maximum"], 0.82)
 
 
 if __name__ == "__main__":

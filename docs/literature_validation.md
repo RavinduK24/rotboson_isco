@@ -1,4 +1,4 @@
-# Free-field literature validation (Phases 1-2)
+# Rotating boson-star literature validation
 
 This document defines the conventions and acceptance contract used by
 `validation/benchmarks.json` and the HPC workflow. These phases validate
@@ -42,7 +42,7 @@ also pass its mass and central-lapse identity window.
 
 ## Self-interaction conversion
 
-For later quartic validation, Grandclement, Some and Gourgoulhon use
+For quartic validation, Grandclement, Some and Gourgoulhon use
 
 `V(x)=m^2*x*(1+2*pi*Lambda*x)`.
 
@@ -50,6 +50,25 @@ ROTBOSON uses `V(x)=m^2*x+lambda_4*x^2/2`, hence
 `lambda_4=4*pi*m^2*Lambda`; with `m=1`, paper `Lambda=200` is
 `lambda_4=2513.2741228718345`. Couplings must always be recorded in both paper
 and code conventions.
+
+The interacting workflow records every fixed-field homotopy checkpoint at
+paper couplings `Lambda=1,2,5,10,20,40,60,80,100,120,140,160,180,200` and
+checks the potential tag, converted coupling, convergence, nonvacuum state,
+Komar surface/volume consistency, and `J=ell*Q`. These intermediate points test
+the numerical path through coupling space; they are not presented as
+literature observable benchmarks.
+
+At `ell=1`, `Lambda=200`, Table II gives the rounded sequence maximum
+`Mmax=3.48` at `omega=0.82`. Validation therefore has two complementary tests:
+
+1. locate the sampled internal maximum of the amplitude sequence and compare
+   both its mass and frequency with the rounded table values;
+2. solve exactly at `omega=0.82` and repeat that solution over the registered
+   resolution and outer-boundary matrix.
+
+Both comparisons use the manifest's precision-aware rounded tolerance. This
+does not turn the two-decimal table entries into artificial high-precision
+references.
 
 ## Benchmarks and provenance
 
@@ -73,7 +92,9 @@ SLURM arrays derive their sizes from those records. The principal sources are:
 
 ## Reproducibility boundary
 
-All generated files are rooted at `validation/results/` by default. The
-workflow never searches, deletes, or rewrites ordinary `out/` solution
-directories. Each accepted continuation step has a durable pointer in
-`validation/results/l1/state`; rerunning a stage validates and reuses it.
+The free-field workflow is wholly rooted at `validation/results/` and never
+touches ordinary `out/` solutions. The interacting workflow deliberately
+reuses the established production homotopy and `Lambda=200` amplitude branch
+under `out/`, then writes its exact-frequency and grid re-solves beneath
+`validation/results/interacting/quartic_Lambda_200/`. Reruns validate and reuse
+both production checkpoints and isolated validation pointers.

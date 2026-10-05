@@ -60,7 +60,7 @@ echo "Boson-star literature validation"
 echo "  checkout: $ROTBOSON_DIR"
 echo "  outputs:  $VALIDATION_ROOT"
 echo "  resources: partition=h07q2 cpus=4 memory=128G time=72h concurrency=2"
-"$PYTHON_BIN" "$validator" --manifest "$manifest" manifest-summary --ell "$ell"
+"$PYTHON_BIN" "$validator" --manifest "$manifest" manifest-summary --ell "$ell" --potential free
 
 submit() {
   local dependency="$1"
@@ -69,7 +69,7 @@ submit() {
   if [ -n "$dependency" ]; then
     command+=("--dependency=afterok:${dependency}")
   fi
-  command+=(--export="ALL,ROTBOSON_DIR=$ROTBOSON_DIR,VALIDATION_ROOT=$VALIDATION_ROOT,VALIDATION_ELL=$ell,PYTHON_BIN=$PYTHON_BIN")
+  command+=(--export="ALL,ROTBOSON_DIR=$ROTBOSON_DIR,VALIDATION_ROOT=$VALIDATION_ROOT,VALIDATION_ELL=$ell,VALIDATION_POTENTIAL=free,PYTHON_BIN=$PYTHON_BIN")
   command+=("$@")
   if [ "$dry_run" = "1" ]; then
     printf 'DRY-RUN:'
@@ -99,8 +99,8 @@ if [ "$ell" = "0" ]; then
 fi
 
 "$PYTHON_BIN" "$validator" --manifest "$manifest" profile --ell "$ell" >/dev/null
-target_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" targets --ell "$ell" | awk 'END {print NR}')
-matrix_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" matrix --ell "$ell" --exclude-production | awk 'END {print NR}')
+target_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" targets --ell "$ell" --potential free | awk 'END {print NR}')
+matrix_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" matrix --ell "$ell" --potential free --exclude-production | awk 'END {print NR}')
 [ "$target_count" -gt 0 ] && [ "$matrix_count" -gt 0 ] || {
   echo "ERROR: manifest has no l=$ell targets or convergence cases" >&2
   exit 2
