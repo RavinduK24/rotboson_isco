@@ -2,10 +2,6 @@
 
 set -euo pipefail
 
-safe_awk() {
-  env LD_LIBRARY_PATH= /usr/bin/awk "$@"
-}
-
 coupling_tag() {
   local potential="$1"
   local coupling_name="$2"
@@ -167,11 +163,11 @@ write_initial_data_params() {
 metadata_value() {
   local directory="$1"
   local key="$2"
-  safe_awk -F= -v key="$key" '$1 == key {print $2; exit}' "$directory/run_metadata.txt"
+  env LD_LIBRARY_PATH= /usr/bin/awk -F= -v key="$key" '$1 == key {print $2; exit}' "$directory/run_metadata.txt"
 }
 
 first_numeric_value() {
-  safe_awk '!/^#/ && NF {print $1; exit}' "$1"
+  env LD_LIBRARY_PATH= /usr/bin/awk '!/^#/ && NF {print $1; exit}' "$1"
 }
 
 validate_solution() {
@@ -191,7 +187,7 @@ validate_solution() {
     echo "ERROR: solver did not converge in $directory" >&2
     return 1
   fi
-  if ! safe_awk -v mass="$mass" -v phi="$phi_max" 'BEGIN {exit !(mass > 1.0e-10 && phi > 1.0e-10)}'; then
+  if ! env LD_LIBRARY_PATH= /usr/bin/awk -v mass="$mass" -v phi="$phi_max" 'BEGIN {exit !(mass > 1.0e-10 && phi > 1.0e-10)}'; then
     echo "ERROR: vacuum-like solution rejected: $directory (M=$mass, phi_max=$phi_max)" >&2
     return 1
   fi
@@ -211,7 +207,7 @@ validate_continuation_step() {
   current_mass=$(metadata_value "$current" "M_Komar")
   previous_phi=$(first_numeric_value "$previous/phi_max.asc")
   current_phi=$(first_numeric_value "$current/phi_max.asc")
-  if ! safe_awk -v pm="$previous_mass" -v cm="$current_mass" -v pp="$previous_phi" -v cp="$current_phi" \
+  if ! env LD_LIBRARY_PATH= /usr/bin/awk -v pm="$previous_mass" -v cm="$current_mass" -v pp="$previous_phi" -v cp="$current_phi" \
       'BEGIN {exit !(cm > pm * 1.0e-4 && cp > pp * 1.0e-4)}'; then
     echo "ERROR: continuation collapsed toward vacuum: $previous -> $current" >&2
     return 1
@@ -295,7 +291,7 @@ find_lowest_omega_solution() {
       printf "%s %s\n" "$omega" "$(basename "$directory")"
     fi
   done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
-    | sort -g | safe_awk 'NR == 1 {print $2}'
+    | sort -g | env LD_LIBRARY_PATH= /usr/bin/awk 'NR == 1 {print $2}'
 }
 
 branch_has_internal_mass_maximum() {
@@ -318,7 +314,7 @@ branch_has_internal_mass_maximum() {
     fi
   done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
     | sort -g \
-    | safe_awk '
+    | env LD_LIBRARY_PATH= /usr/bin/awk '
         NR == 1 {maximum = $2; maximum_index = 1}
         $2 > maximum {maximum = $2; maximum_index = NR}
         END {exit !(NR >= 3 && maximum_index > 1 && maximum_index < NR)}
