@@ -3,7 +3,7 @@
 set -euo pipefail
 
 safe_awk() {
-  env -u LD_LIBRARY_PATH /usr/bin/awk "$@"
+  env LD_LIBRARY_PATH= /usr/bin/awk "$@"
 }
 
 coupling_tag() {

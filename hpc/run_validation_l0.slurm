@@ -23,7 +23,7 @@ mkdir -p "$SCAN_DIR"
 status_file="$SCAN_DIR/run_status.csv"
 for phi0 in "${PHI0_VALUES[@]}"; do
   label="free_l0_phi0_$(label_for_value "$phi0")"
-  if [ -f "$status_file" ] && env -u LD_LIBRARY_PATH /usr/bin/awk -F, -v label="$label" '$1 == label && $6 == 0 {found=1} END {exit !found}' "$status_file"; then
+  if [ -f "$status_file" ] && env LD_LIBRARY_PATH= /usr/bin/awk -F, -v label="$label" '$1 == label && $6 == 0 {found=1} END {exit !found}' "$status_file"; then
     echo "Reusing completed l=0 checkpoint $label"
     continue
   fi

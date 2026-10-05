@@ -99,8 +99,8 @@ if [ "$ell" = "0" ]; then
 fi
 
 "$PYTHON_BIN" "$validator" --manifest "$manifest" profile --ell "$ell" >/dev/null
-target_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" targets --ell "$ell" --potential free | env -u LD_LIBRARY_PATH /usr/bin/awk 'END {print NR}')
-matrix_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" matrix --ell "$ell" --potential free --exclude-production | env -u LD_LIBRARY_PATH /usr/bin/awk 'END {print NR}')
+target_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" targets --ell "$ell" --potential free | env LD_LIBRARY_PATH= /usr/bin/awk 'END {print NR}')
+matrix_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" matrix --ell "$ell" --potential free --exclude-production | env LD_LIBRARY_PATH= /usr/bin/awk 'END {print NR}')
 [ "$target_count" -gt 0 ] && [ "$matrix_count" -gt 0 ] || {
   echo "ERROR: manifest has no l=$ell targets or convergence cases" >&2
   exit 2
