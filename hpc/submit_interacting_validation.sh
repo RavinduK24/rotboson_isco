@@ -65,9 +65,9 @@ echo "  resources: partition=h07q2 cpus=4 memory=128G time=72h concurrency=2"
   --ell "$ell" --potential "$potential"
 
 target_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" targets \
-  --ell "$ell" --potential "$potential" | awk 'END {print NR}')
+  --ell "$ell" --potential "$potential" | env -u LD_LIBRARY_PATH /usr/bin/awk 'END {print NR}')
 matrix_count=$("$PYTHON_BIN" "$validator" --manifest "$manifest" matrix \
-  --ell "$ell" --potential "$potential" --exclude-production | awk 'END {print NR}')
+  --ell "$ell" --potential "$potential" --exclude-production | env -u LD_LIBRARY_PATH /usr/bin/awk 'END {print NR}')
 [ "$target_count" -gt 0 ] && [ "$matrix_count" -gt 0 ] || {
   echo "ERROR: no interacting targets or convergence cases are registered" >&2
   exit 2

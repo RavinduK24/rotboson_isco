@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+safe_awk() {
+  env -u LD_LIBRARY_PATH /usr/bin/awk "$@"
+}
+
 validation_python() {
   "${PYTHON_BIN:-python3}" "$ROTBOSON_DIR/scripts/validate_boson_stars.py" --manifest "$ROTBOSON_DIR/validation/benchmarks.json" "$@"
 }
@@ -9,11 +13,11 @@ validation_python() {
 metadata_value() {
   local directory="$1"
   local key="$2"
-  awk -F= -v key="$key" '$1 == key {print $2; exit}' "$directory/run_metadata.txt"
+  safe_awk -F= -v key="$key" '$1 == key {print $2; exit}' "$directory/run_metadata.txt"
 }
 
 first_numeric_value() {
-  awk '!/^#/ && NF {print $1; exit}' "$1"
+  safe_awk '!/^#/ && NF {print $1; exit}' "$1"
 }
 
 validation_solution_from_pointer() {
@@ -50,7 +54,7 @@ write_analytic_seed_params() {
   local omega="$5"
   local psi0="$6"
   local dr
-  dr=$(awk -v r="$r_max" -v n="$n" 'BEGIN {printf "%.17g", r/n}')
+  dr=$(safe_awk -v r="$r_max" -v n="$n" 'BEGIN {printf "%.17g", r/n}')
   mkdir -p "$(dirname "$parameter_file")"
   sed -E \
     -e "s/^[[:space:]]*dr[[:space:]]*=.*/dr = ${dr}/" \
@@ -88,9 +92,9 @@ write_seeded_params() {
   source_n=$(metadata_value "$source_dir" NrInterior)
   source_dr=$(metadata_value "$source_dir" dr)
   source_omega=$(metadata_value "$source_dir" omega)
-  dr=$(awk -v r="$r_max" -v n="$n" 'BEGIN {printf "%.17g", r/n}')
+  dr=$(safe_awk -v r="$r_max" -v n="$n" 'BEGIN {printf "%.17g", r/n}')
   read_mode=1
-  if [ "$source_n" != "$n" ] || ! awk -v a="$source_dr" -v b="$dr" 'BEGIN {exit !(sqrt((a-b)*(a-b)) < 1.0e-14)}'; then
+  if [ "$source_n" != "$n" ] || ! safe_awk -v a="$source_dr" -v b="$dr" 'BEGIN {exit !(sqrt((a-b)*(a-b)) < 1.0e-14)}'; then
     read_mode=3
   fi
   mkdir -p "$(dirname "$parameter_file")"
@@ -129,7 +133,7 @@ write_seeded_params() {
       echo 'fixedOmega = 0'
     elif [ "$mode" = "omega" ]; then
       echo 'scale_u4 = 1.0'
-      awk -v target="$value" -v source="$source_omega" 'BEGIN {printf "scale_u6 = %.17g\n", target/source}'
+      safe_awk -v target="$value" -v source="$source_omega" 'BEGIN {printf "scale_u6 = %.17g\n", target/source}'
       echo 'fixedPhi = 0'
       echo 'fixedOmega = 1'
     else
@@ -205,7 +209,7 @@ append_branch_point() {
   local solution="$2"
   local increment="$3"
   local step omega mass phi temporary
-  step=$(awk 'END {print NR-1}' "$index")
+  step=$(safe_awk 'END {print NR-1}' "$index")
   omega=$(metadata_value "$solution" omega)
   mass=$(metadata_value "$solution" M_Komar)
   phi=$(first_numeric_value "$solution/phi_max.asc")
@@ -233,7 +237,7 @@ run_branch_phase() {
     < <(validation_python profile --ell "$ell")
   mkdir -p "$state_dir" "$branch_root/params/branch" "$branch_root/work/branch"
   initialize_branch_index "$index"
-  if [ "$(awk 'END {print NR}' "$index")" -eq 1 ]; then
+  if [ "$(safe_awk 'END {print NR}' "$index")" -eq 1 ]; then
     parameter="$branch_root/params/branch/seed.par"
     write_analytic_seed_params "$parameter" "$ell" "$profile_n" "$profile_r" "$profile_omega" "$profile_psi"
     attempt="$branch_root/work/branch/step_0000_seed"
@@ -252,20 +256,20 @@ run_branch_phase() {
     validation_python check-solution --path "$source" >/dev/null
     retry=0
     while :; do
-      factor=$(awk -v inc="$increment" 'BEGIN {printf "%.17g", 1.0+inc}')
-      parameter="$branch_root/params/branch/${phase}_step_$(printf '%04d' "$(awk 'END {print NR-1}' "$index")")_try_${retry}.par"
-      attempt="$branch_root/work/branch/${phase}_step_$(printf '%04d' "$(awk 'END {print NR-1}' "$index")")_try_${retry}"
+      factor=$(safe_awk -v inc="$increment" 'BEGIN {printf "%.17g", 1.0+inc}')
+      parameter="$branch_root/params/branch/${phase}_step_$(printf '%04d' "$(safe_awk 'END {print NR-1}' "$index")")_try_${retry}.par"
+      attempt="$branch_root/work/branch/${phase}_step_$(printf '%04d' "$(safe_awk 'END {print NR-1}' "$index")")_try_${retry}"
       write_seeded_params "$parameter" "$source" "$ell" "$profile_n" "$profile_r" amplitude "$factor"
       echo "Continuation phase=$phase source=$source amplitude_increment=$increment retry=$retry"
       if run_validation_attempt "$parameter" "$attempt"; then
         append_branch_point "$index" "$VALIDATION_SOLUTION" "$increment"
-        increment=$(awk -v inc="$increment" -v cap="$initial_increment" 'BEGIN {v=inc*1.25; if(v>cap)v=cap; printf "%.17g",v}')
+        increment=$(safe_awk -v inc="$increment" -v cap="$initial_increment" 'BEGIN {v=inc*1.25; if(v>cap)v=cap; printf "%.17g",v}')
         write_validation_pointer "$increment_file" "$increment"
         break
       fi
-      increment=$(awk -v inc="$increment" 'BEGIN {printf "%.17g",inc/2.0}')
+      increment=$(safe_awk -v inc="$increment" 'BEGIN {printf "%.17g",inc/2.0}')
       retry=$((retry + 1))
-      if ! awk -v inc="$increment" -v minimum="$minimum_increment" 'BEGIN {exit !(inc >= minimum)}'; then
+      if ! safe_awk -v inc="$increment" -v minimum="$minimum_increment" 'BEGIN {exit !(inc >= minimum)}'; then
         echo "ERROR: continuation failed below minimum amplitude increment $minimum_increment" >&2
         return 1
       fi
