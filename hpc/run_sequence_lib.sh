@@ -342,14 +342,19 @@ run_free_sequence() {
   seed_dir=$(weak_seed_dir "free" "none" "0.0" "$ell")
   if [ "${RESET_FREE:-0}" = "1" ]; then
     rm -rf "$state_dir"
+    remove_all_potential_solutions_for_ell "$rotboson_dir" "free" "$ell"
   fi
   if [ ! -f "$initialized" ]; then
-    remove_all_potential_solutions_for_ell "$rotboson_dir" "free" "$ell"
     mkdir -p "$state_dir"
-    write_seed_params "$rotboson_dir" "free" "none" "0.0" "$seed_parameter" "$ell"
-    echo "Running free weak seed l=$ell, psi0=$PROD_PSI0, dr=$PROD_DR"
-    "$rotboson_dir/ROTBOSON" "$seed_parameter"
-    validate_solution "$seed_dir"
+    if [ "${RESET_FREE:-0}" != "1" ] && validate_solution "$seed_dir" >/dev/null 2>&1; then
+      echo "Recovering existing valid free weak seed l=$ell: $seed_dir"
+    else
+      remove_all_potential_solutions_for_ell "$rotboson_dir" "free" "$ell"
+      write_seed_params "$rotboson_dir" "free" "none" "0.0" "$seed_parameter" "$ell"
+      echo "Running free weak seed l=$ell, psi0=$PROD_PSI0, dr=$PROD_DR"
+      "$rotboson_dir/ROTBOSON" "$seed_parameter"
+      validate_solution "$seed_dir"
+    fi
     printf "initialized=%s\n" "$(date -Is)" > "$initialized"
   fi
   validate_solution "$seed_dir"
