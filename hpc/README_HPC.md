@@ -177,8 +177,10 @@ The stages are:
    `Lambda=120,140,160,180,200`.
 4. `run_quartic.slurm`: start from the weak `Lambda=200` checkpoint and create
    the mass-frequency branch with a small amplitude step. The weak-field end of
-   this strongly interacting sequence is spatially extended, so the continuation
-   uses a bridge grid with `N=384`, `dr=0.0625`, and `Rmax=24`. Initial data are
+   this strongly interacting sequence is spatially extended. The workflow first
+   performs an unscaled relaxation on a bridge grid with `N=384`, `Rmax=64`,
+   and `dr=1/6`; only an equilibrium passing Komar/ADM, virial, and `r99`
+   quality gates is allowed to seed the amplitude continuation. Initial data are
    interpolated onto that grid automatically. Exact benchmark and convergence
    solves are subsequently interpolated back onto their manifest grids.
 

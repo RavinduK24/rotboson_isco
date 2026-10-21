@@ -210,6 +210,10 @@ first_numeric_value() {
   numeric_helper first "$1"
 }
 
+last_numeric_value() {
+  numeric_helper last "$1"
+}
+
 validate_solution() {
   local directory="$1"
   local status
@@ -231,6 +235,50 @@ validate_solution() {
     echo "ERROR: vacuum-like solution rejected: $directory (M=$mass, phi_max=$phi_max)" >&2
     return 1
   fi
+}
+
+validate_equilibrium_quality() {
+  local directory="$1"
+  local r_max="$2"
+  local mass_surface
+  local mass_volume
+  local mass_adm
+  local grv2
+  local grv3
+  local r99
+
+  validate_solution "$directory"
+  for file in M_Komar1.asc M_Komar2.asc M_ADM.asc r99.asc; do
+    if [ ! -f "$directory/$file" ]; then
+      echo "ERROR: missing global diagnostic $directory/$file" >&2
+      return 1
+    fi
+  done
+  mass_surface=$(last_numeric_value "$directory/M_Komar1.asc")
+  mass_volume=$(last_numeric_value "$directory/M_Komar2.asc")
+  mass_adm=$(last_numeric_value "$directory/M_ADM.asc")
+  grv2=$(metadata_value "$directory" "GRV2")
+  grv3=$(metadata_value "$directory" "GRV3")
+  r99=$(first_numeric_value "$directory/r99.asc")
+  if ! numeric_helper equilibrium-quality \
+    "$mass_surface" "$mass_volume" "$mass_adm" "$grv2" "$grv3" "$r99" "$r_max" \
+    2.0e-2 5.0e-2 5.0e-2 2.0e-1 8.0e-1; then
+    echo "ERROR: global diagnostics rejected $directory (M_s=$mass_surface M_v=$mass_volume M_ADM=$mass_adm GRV2=$grv2 GRV3=$grv3 r99=$r99 Rmax=$r_max)" >&2
+    return 1
+  fi
+}
+
+solution_matches_grid() {
+  local directory="$1"
+  local n="$2"
+  local dr="$3"
+  local solution_n
+  local solution_dr
+
+  [ -f "$directory/run_metadata.txt" ] || return 1
+  solution_n=$(metadata_value "$directory" "NrInterior")
+  solution_dr=$(metadata_value "$directory" "dr")
+  [ "$solution_n" = "$n" ] && numeric_helper close "$solution_dr" "$dr" 1.0e-10
 }
 
 validate_continuation_step() {
@@ -331,6 +379,79 @@ find_lowest_omega_solution() {
     fi
   done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
     | numeric_helper min-second
+}
+
+find_lowest_omega_solution_on_grid() {
+  local rotboson_dir="$1"
+  local potential="$2"
+  local coupling_name="$3"
+  local coupling_value="$4"
+  local ell="$5"
+  local n="$6"
+  local dr="$7"
+  local r_max="$8"
+  local pattern
+  local directory
+  local omega
+
+  pattern=$(solution_family_pattern "$potential" "$coupling_name" "$coupling_value" "$ell")
+  while IFS= read -r directory; do
+    if solution_matches_grid "$directory" "$n" "$dr" && \
+       validate_equilibrium_quality "$directory" "$r_max" >/dev/null 2>&1; then
+      omega=$(metadata_value "$directory" "omega")
+      printf "%s %s\n" "$omega" "$(basename "$directory")"
+    fi
+  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
+    | numeric_helper min-second
+}
+
+count_quality_solutions_on_grid() {
+  local rotboson_dir="$1"
+  local potential="$2"
+  local coupling_name="$3"
+  local coupling_value="$4"
+  local ell="$5"
+  local n="$6"
+  local dr="$7"
+  local r_max="$8"
+  local pattern
+  local directory
+  local count=0
+
+  pattern=$(solution_family_pattern "$potential" "$coupling_name" "$coupling_value" "$ell")
+  while IFS= read -r directory; do
+    if solution_matches_grid "$directory" "$n" "$dr" && \
+       validate_equilibrium_quality "$directory" "$r_max" >/dev/null 2>&1; then
+      count=$((count + 1))
+    fi
+  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print)
+  printf "%d" "$count"
+}
+
+branch_has_internal_mass_maximum_on_grid() {
+  local rotboson_dir="$1"
+  local potential="$2"
+  local coupling_name="$3"
+  local coupling_value="$4"
+  local ell="$5"
+  local n="$6"
+  local dr="$7"
+  local r_max="$8"
+  local pattern
+  local directory
+  local omega
+  local mass
+
+  pattern=$(solution_family_pattern "$potential" "$coupling_name" "$coupling_value" "$ell")
+  while IFS= read -r directory; do
+    if solution_matches_grid "$directory" "$n" "$dr" && \
+       validate_equilibrium_quality "$directory" "$r_max" >/dev/null 2>&1; then
+      omega=$(metadata_value "$directory" "omega")
+      mass=$(metadata_value "$directory" "M_Komar")
+      printf "%s %s\n" "$omega" "$mass"
+    fi
+  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
+    | numeric_helper internal-maximum
 }
 
 branch_has_internal_mass_maximum() {
@@ -492,11 +613,20 @@ run_target_quartic_branch() {
   local source_dir="$4"
   local target_lambda4=2513.2741228718345
   local parameter_file="$scan_dir/params/quartic_Lambda_200_l${ell}_branch.par"
+  local bridge_parameter="$scan_dir/params/quartic_Lambda_200_l${ell}_bridge.par"
   local state_dir="$scan_dir/state"
   local initialized="$state_dir/initialized"
   local completed="$state_dir/completed"
+  local bridge_checkpoint="$state_dir/bridge.path"
+  local rejected_dir="$scan_dir/rejected_R24"
+  local bridge_n=384
+  local bridge_dr=1.6666666666666666E-01
+  local bridge_r_max=64.0
+  local bridge_hwl_max=300
   local pattern
   local directory
+  local bridge_source
+  local bridge_dir
   local resume_dir
   local count
 
@@ -519,28 +649,80 @@ run_target_quartic_branch() {
     printf "initialized=%s\n" "$(date -Is)" > "$initialized"
   fi
   validate_solution "$source_dir"
+
+  # The superseded Rmax=24 bridge can satisfy the algebraic Newton tolerance
+  # while placing r99 at the boundary.  Move those known-bad products out of
+  # the ordinary solution search path, preserving them for diagnosis.
+  mkdir -p "$rejected_dir"
+  pattern=$(solution_family_pattern "quartic" "lambda_4" "$target_lambda4" "$ell")
+  while IFS= read -r directory; do
+    if solution_matches_grid "$directory" 384 6.25000E-02; then
+      mv "$directory" "$rejected_dir/"
+    fi
+  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print)
+
+  bridge_dir=""
+  if [ -f "$bridge_checkpoint" ]; then
+    bridge_dir=$(sed -n '1p' "$bridge_checkpoint")
+    if ! solution_matches_grid "$bridge_dir" "$bridge_n" "$bridge_dr" || \
+       ! validate_equilibrium_quality "$bridge_dir" "$bridge_r_max"; then
+      echo "Discarding invalid large-domain bridge checkpoint: $bridge_dir"
+      rm -f "$bridge_checkpoint"
+      bridge_dir=""
+    fi
+  fi
+  if [ -z "$bridge_dir" ]; then
+    bridge_dir=$(find_lowest_omega_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+      "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max" || true)
+  fi
+  if [ -z "$bridge_dir" ]; then
+    bridge_source=$(find_lowest_omega_solution "$rotboson_dir" "quartic" "lambda_4" \
+      "$target_lambda4" "$ell" || true)
+    if [ -z "$bridge_source" ]; then
+      bridge_source=$source_dir
+    fi
+    write_initial_data_params "$rotboson_dir" "$bridge_source" "quartic" "lambda_4" "$target_lambda4" \
+      "$bridge_parameter" "$ell" 1.0 0 1.0 \
+      "$bridge_n" "$bridge_dr" "$bridge_r_max" "$bridge_hwl_max"
+    echo "Relaxing Lambda=200 l=$ell seed from $bridge_source onto large-domain bridge grid N=$bridge_n, Rmax=$bridge_r_max"
+    "$rotboson_dir/ROTBOSON" "$bridge_parameter"
+    bridge_dir=$(find_lowest_omega_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+      "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max" || true)
+    if [ -z "$bridge_dir" ]; then
+      echo "ERROR: large-domain bridge relaxation produced no solution passing global diagnostics" >&2
+      return 1
+    fi
+  fi
+  validate_equilibrium_quality "$bridge_dir" "$bridge_r_max"
+  printf "%s\n" "$bridge_dir" > "$bridge_checkpoint"
+  echo "Large-domain bridge accepted: $bridge_dir"
+
   if [ -f "$completed" ]; then
-    if branch_has_internal_mass_maximum "$rotboson_dir" "quartic" "lambda_4" "$target_lambda4" "$ell"; then
+    if branch_has_internal_mass_maximum_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+      "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max"; then
       echo "Lambda=200 l=$ell branch already completed"
       return 0
     fi
     rm -f "$completed"
   fi
-  resume_dir=$(find_lowest_omega_solution "$rotboson_dir" "quartic" "lambda_4" "$target_lambda4" "$ell")
+  resume_dir=$(find_lowest_omega_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+    "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max" || true)
   if [ -z "$resume_dir" ]; then
-    resume_dir=$source_dir
+    resume_dir=$bridge_dir
   fi
   write_initial_data_params "$rotboson_dir" "$resume_dir" "quartic" "lambda_4" "$target_lambda4" \
     "$parameter_file" "$ell" "$PROD_SCALE_NEXT" 1 "$PROD_SCALE_NEXT" \
-    384 6.25000E-02 24.0 320
-  echo "Running Lambda=200 amplitude branch l=$ell from $resume_dir on bridge grid N=384, Rmax=24, scale_next=$PROD_SCALE_NEXT"
+    "$bridge_n" "$bridge_dr" "$bridge_r_max" "$bridge_hwl_max"
+  echo "Running Lambda=200 amplitude branch l=$ell from $resume_dir on bridge grid N=$bridge_n, Rmax=$bridge_r_max, scale_next=$PROD_SCALE_NEXT"
   "$rotboson_dir/ROTBOSON" "$parameter_file"
-  count=$(count_converged_solutions "$rotboson_dir" "quartic" "lambda_4" "$target_lambda4" "$ell")
+  count=$(count_quality_solutions_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+    "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max")
   if [ "$count" -lt 2 ]; then
-    echo "ERROR: Lambda=200 l=$ell produced only $count converged solution(s)" >&2
+    echo "ERROR: Lambda=200 l=$ell produced only $count globally validated bridge-grid solution(s)" >&2
     return 1
   fi
-  if ! branch_has_internal_mass_maximum "$rotboson_dir" "quartic" "lambda_4" "$target_lambda4" "$ell"; then
+  if ! branch_has_internal_mass_maximum_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+    "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max"; then
     echo "ERROR: Lambda=200 l=$ell has not crossed an internal mass maximum; resubmit this array task to continue" >&2
     return 1
   fi

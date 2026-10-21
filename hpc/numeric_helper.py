@@ -35,11 +35,42 @@ def main():
                     print(stripped.split()[0])
                     return 0
         return 1
+    if command == "last":
+        value = None
+        with open(args[0], "r") as handle:
+            for line in handle:
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#"):
+                    value = stripped.split()[0]
+        if value is not None:
+            print(value)
+            return 0
+        return 1
     if command == "positive":
         return 0 if all(float(value) > 1.0e-10 for value in args) else 1
     if command == "continuation":
         previous_mass, current_mass, previous_field, current_field = map(float, args)
         return 0 if current_mass > previous_mass * 1.0e-4 and current_field > previous_field * 1.0e-4 else 1
+    if command == "equilibrium-quality":
+        (mass_surface, mass_volume, mass_adm, grv2, grv3, r99, r_max,
+         komar_tolerance, adm_tolerance, grv2_tolerance, grv3_tolerance,
+         radius_fraction) = map(float, args)
+
+        def relative_difference(left, right):
+            return abs(left - right) / max(abs(left), abs(right), 1.0e-30)
+
+        checks = (
+            mass_surface > 0.0,
+            mass_volume > 0.0,
+            mass_adm > 0.0,
+            relative_difference(mass_surface, mass_volume) <= komar_tolerance,
+            relative_difference(0.5 * (mass_surface + mass_volume), mass_adm) <= adm_tolerance,
+            abs(grv2) <= grv2_tolerance,
+            abs(grv3) <= grv3_tolerance,
+            r99 > 0.0,
+            r99 <= radius_fraction * r_max,
+        )
+        return 0 if all(checks) else 1
     if command == "divide":
         print("{:.17g}".format(float(args[0]) / float(args[1])))
         return 0
