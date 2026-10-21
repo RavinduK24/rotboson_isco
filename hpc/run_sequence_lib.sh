@@ -466,6 +466,10 @@ run_target_quartic_branch() {
   local resume_dir
   local count
 
+  # Homotopy checkpoints historically contain paths relative to out/, whereas
+  # find(1) below returns absolute paths.  Normalize the protected seed before
+  # comparing paths so branch initialization cannot delete its own seed.
+  source_dir=$(readlink -f -- "$source_dir")
   set_ell_numerics "$ell"
   if [ "${RESET_BRANCH:-0}" = "1" ]; then
     rm -rf "$state_dir"
