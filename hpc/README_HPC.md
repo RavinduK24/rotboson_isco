@@ -176,7 +176,11 @@ The stages are:
 3. `run_quartic_homotopy_high.slurm`: continue through
    `Lambda=120,140,160,180,200`.
 4. `run_quartic.slurm`: start from the weak `Lambda=200` checkpoint and create
-   the mass-frequency branch with a small amplitude step.
+   the mass-frequency branch with a small amplitude step. The weak-field end of
+   this strongly interacting sequence is spatially extended, so the continuation
+   uses a bridge grid with `N=384`, `dr=0.0625`, and `Rmax=24`. Initial data are
+   interpolated onto that grid automatically. Exact benchmark and convergence
+   solves are subsequently interpolated back onto their manifest grids.
 
 During coupling homotopy, `fixedPhi=1`, `fixedOmega=0`, `scale_u4=1`, and
 `sweep=0`. Thus only the coupling changes between consecutive solves. Each

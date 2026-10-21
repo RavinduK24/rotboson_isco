@@ -139,15 +139,37 @@ write_initial_data_params() {
   local scale_u4="$8"
   local sweep="$9"
   local scale_next="${10}"
+  local target_n="${11:-}"
+  local target_dr="${12:-}"
+  local target_r_max="${13:-}"
+  local target_hwl_max="${14:-200}"
   local template="$rotboson_dir/out/l1_from_initial_data.par"
+  local source_n
+  local source_dr
+  local read_mode=1
 
   set_ell_numerics "$ell"
+  if [ -n "$target_n" ]; then
+    PROD_N=$target_n
+  fi
+  if [ -n "$target_dr" ]; then
+    PROD_DR=$target_dr
+  fi
+  if [ -n "$target_r_max" ]; then
+    PROD_RR_MAX=$target_r_max
+  fi
+  source_n=$(metadata_value "$source_dir" "NrInterior")
+  source_dr=$(metadata_value "$source_dir" "dr")
+  if [ "$source_n" != "$PROD_N" ] || ! numeric_helper close "$source_dr" "$PROD_DR" 1.0e-14; then
+    read_mode=3
+  fi
   mkdir -p "$(dirname "$parameter_file")"
   sed -E \
     -e "s/^[[:space:]]*dr[[:space:]]*=.*/dr = ${PROD_DR}/" \
     -e "s/^[[:space:]]*dz[[:space:]]*=.*/dz = ${PROD_DR}/" \
     -e "s/^[[:space:]]*NrInterior[[:space:]]*=.*/NrInterior = ${PROD_N}/" \
     -e "s/^[[:space:]]*NzInterior[[:space:]]*=.*/NzInterior = ${PROD_N}/" \
+    -e "s/^[[:space:]]*readInitialData[[:space:]]*=.*/readInitialData = ${read_mode}/" \
     -e "s|^[[:space:]]*log_alpha_i[[:space:]]*=.*|log_alpha_i = \"${source_dir}/log_alpha_f.asc\"|" \
     -e "s|^[[:space:]]*beta_i[[:space:]]*=.*|beta_i = \"${source_dir}/beta_f.asc\"|" \
     -e "s|^[[:space:]]*log_h_i[[:space:]]*=.*|log_h_i = \"${source_dir}/log_h_f.asc\"|" \
@@ -159,10 +181,22 @@ write_initial_data_params() {
     -e "s/^[[:space:]]*l[[:space:]]*=.*/l = ${ell}/" \
     -e "s/^[[:space:]]*sweep[[:space:]]*=.*/sweep = ${sweep}/" \
     -e "s/^[[:space:]]*scale_next[[:space:]]*=.*/scale_next = ${scale_next}/" \
+    -e "s/^[[:space:]]*hwl_max[[:space:]]*=.*/hwl_max = ${target_hwl_max}/" \
     -e "s/^[[:space:]]*epsilon[[:space:]]*=.*/epsilon = ${PROD_EPSILON}/" \
     -e "s/^[[:space:]]*maxNewtonIter[[:space:]]*=.*/maxNewtonIter = ${PROD_MAX_NEWTON}/" \
     -e "s/^[[:space:]]*lambdaMin[[:space:]]*=.*/lambdaMin = ${PROD_LAMBDA_MIN}/" \
     "$template" > "$parameter_file"
+  if [ "$read_mode" = "3" ]; then
+    {
+      printf "\n# Source-grid metadata for interpolated initial data\n"
+      printf "NrTotalInitial = %d\n" "$((source_n + 4))"
+      printf "NzTotalInitial = %d\n" "$((source_n + 4))"
+      printf "order_i = 4\n"
+      printf "ghost_i = 2\n"
+      printf "dr_i = %s\n" "$source_dr"
+      printf "dz_i = %s\n" "$source_dr"
+    } >> "$parameter_file"
+  fi
   append_generated_settings "$parameter_file" "$potential" "$coupling_name" "$coupling_value"
 }
 
@@ -497,8 +531,9 @@ run_target_quartic_branch() {
     resume_dir=$source_dir
   fi
   write_initial_data_params "$rotboson_dir" "$resume_dir" "quartic" "lambda_4" "$target_lambda4" \
-    "$parameter_file" "$ell" "$PROD_SCALE_NEXT" 1 "$PROD_SCALE_NEXT"
-  echo "Running Lambda=200 amplitude branch l=$ell from $resume_dir, scale_next=$PROD_SCALE_NEXT"
+    "$parameter_file" "$ell" "$PROD_SCALE_NEXT" 1 "$PROD_SCALE_NEXT" \
+    384 6.25000E-02 24.0 320
+  echo "Running Lambda=200 amplitude branch l=$ell from $resume_dir on bridge grid N=384, Rmax=24, scale_next=$PROD_SCALE_NEXT"
   "$rotboson_dir/ROTBOSON" "$parameter_file"
   count=$(count_converged_solutions "$rotboson_dir" "quartic" "lambda_4" "$target_lambda4" "$ell")
   if [ "$count" -lt 2 ]; then
