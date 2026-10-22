@@ -243,12 +243,13 @@ validate_equilibrium_quality() {
   local mass_surface
   local mass_volume
   local mass_adm
+  local mass_schwarz
   local grv2
   local grv3
   local r99
 
   validate_solution "$directory"
-  for file in M_Komar1.asc M_Komar2.asc M_ADM.asc r99.asc; do
+  for file in M_Komar1.asc M_Komar2.asc M_ADM.asc M_Schwarz.asc r99.asc; do
     if [ ! -f "$directory/$file" ]; then
       echo "ERROR: missing global diagnostic $directory/$file" >&2
       return 1
@@ -257,13 +258,15 @@ validate_equilibrium_quality() {
   mass_surface=$(last_numeric_value "$directory/M_Komar1.asc")
   mass_volume=$(last_numeric_value "$directory/M_Komar2.asc")
   mass_adm=$(last_numeric_value "$directory/M_ADM.asc")
+  mass_schwarz=$(last_numeric_value "$directory/M_Schwarz.asc")
   grv2=$(metadata_value "$directory" "GRV2")
   grv3=$(metadata_value "$directory" "GRV3")
   r99=$(first_numeric_value "$directory/r99.asc")
   if ! numeric_helper equilibrium-quality \
-    "$mass_surface" "$mass_volume" "$mass_adm" "$grv2" "$grv3" "$r99" "$r_max" \
+    "$mass_surface" "$mass_volume" "$mass_adm" "$mass_schwarz" \
+    "$grv2" "$grv3" "$r99" "$r_max" \
     2.0e-2 5.0e-2 8.0e-1; then
-    echo "ERROR: global diagnostics rejected $directory (M_s=$mass_surface M_v=$mass_volume M_ADM=$mass_adm GRV2=$grv2 GRV3=$grv3 r99=$r99 Rmax=$r_max)" >&2
+    echo "ERROR: global diagnostics rejected $directory (M_s=$mass_surface M_v=$mass_volume M_ADM_finite=$mass_adm M_Schwarz=$mass_schwarz GRV2=$grv2 GRV3=$grv3 r99=$r99 Rmax=$r_max)" >&2
     return 1
   fi
 }

@@ -17,7 +17,10 @@ Phase 3.
   coordinates. A radius read directly from the numerical grid is a coordinate
   radius. It must not be compared with an areal or circumferential radius
   without performing the appropriate metric conversion.
-- `M_ADM.asc` is the radial ADM surface estimate. `M_Komar1.asc` is the
+- `M_ADM.asc` is the finite-radius radial ADM surface estimate. Its endpoint is
+  not the ADM mass at infinity and is retained for later radial extrapolation.
+  `M_Schwarz.asc` supplies the asymptotic mass consistency check used during
+  branch construction. `M_Komar1.asc` is the
   geometric surface Komar mass and `M_Komar2.asc` is the matter-volume Komar
   mass. `J_Komar1.asc` is the geometric surface angular momentum and
   `J_Komar2.asc` is the matter-volume angular momentum. The reported solver

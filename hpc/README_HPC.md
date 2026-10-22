@@ -182,8 +182,11 @@ The stages are:
    The first three stages use `N=384`; the final stage uses `N=512` to retain
    `dr=0.125` instead of coarsening again. This avoids extrapolating the
    weak-field tail directly from 16 to 64. Only a final equilibrium passing
-   Komar surface/volume agreement, ADM agreement, and `r99` boundary-margin
-   gates may seed amplitude continuation. Raw GRV integrals are retained for
+   Komar surface/volume agreement, Schwarzschild-pseudomass agreement, and
+   `r99` boundary-margin gates may seed amplitude continuation. The endpoint of
+   `M_ADM.asc` is a finite-radius surface estimate, so it is reported but does
+   not gate the branch until its radial profile is extrapolated to infinity.
+   Raw GRV integrals are retained for
    reporting but are not treated as normalized virial errors. Exact benchmark
    and convergence solves are subsequently interpolated onto manifest grids.
 

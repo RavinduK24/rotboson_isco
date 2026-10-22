@@ -53,8 +53,9 @@ def main():
         previous_mass, current_mass, previous_field, current_field = map(float, args)
         return 0 if current_mass > previous_mass * 1.0e-4 and current_field > previous_field * 1.0e-4 else 1
     if command == "equilibrium-quality":
-        (mass_surface, mass_volume, mass_adm, grv2, grv3, r99, r_max,
-         komar_tolerance, adm_tolerance, radius_fraction) = map(float, args)
+        (mass_surface, mass_volume, mass_adm_finite, mass_schwarz, grv2, grv3,
+         r99, r_max, komar_tolerance, asymptotic_tolerance,
+         radius_fraction) = map(float, args)
 
         def relative_difference(left, right):
             return abs(left - right) / max(abs(left), abs(right), 1.0e-30)
@@ -62,9 +63,12 @@ def main():
         checks = (
             mass_surface > 0.0,
             mass_volume > 0.0,
-            mass_adm > 0.0,
+            mass_adm_finite > 0.0,
+            mass_schwarz > 0.0,
             relative_difference(mass_surface, mass_volume) <= komar_tolerance,
-            relative_difference(0.5 * (mass_surface + mass_volume), mass_adm) <= adm_tolerance,
+            relative_difference(
+                0.5 * (mass_surface + mass_volume), mass_schwarz
+            ) <= asymptotic_tolerance,
             math.isfinite(grv2),
             math.isfinite(grv3),
             r99 > 0.0,
