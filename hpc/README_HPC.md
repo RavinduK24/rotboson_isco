@@ -178,11 +178,12 @@ The stages are:
 4. `run_quartic.slurm`: start from the weak `Lambda=200` checkpoint and create
    the mass-frequency branch with a small amplitude step. The weak-field end of
    this strongly interacting sequence is spatially extended. The workflow first
-   performs an unscaled relaxation on a bridge grid with `N=384`, `Rmax=64`,
-   and `dr=1/6`; only an equilibrium passing Komar/ADM, virial, and `r99`
-   quality gates is allowed to seed the amplitude continuation. Initial data are
-   interpolated onto that grid automatically. Exact benchmark and convergence
-   solves are subsequently interpolated back onto their manifest grids.
+   performs unscaled domain-continuation relaxations through `Rmax=24,32,48,64`
+   on `N=384`, ending at `dr=1/6`. This avoids extrapolating the weak-field tail
+   directly from 16 to 64. Only the final equilibrium, after passing Komar/ADM,
+   virial, and `r99` quality gates, may seed the amplitude continuation. Exact
+   benchmark and convergence solves are subsequently interpolated back onto
+   their manifest grids.
 
 During coupling homotopy, `fixedPhi=1`, `fixedOmega=0`, `scale_u4=1`, and
 `sweep=0`. Thus only the coupling changes between consecutive solves. Each

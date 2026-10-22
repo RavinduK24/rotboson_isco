@@ -405,6 +405,29 @@ find_lowest_omega_solution_on_grid() {
     | numeric_helper min-second
 }
 
+find_lowest_converged_solution_on_grid() {
+  local rotboson_dir="$1"
+  local potential="$2"
+  local coupling_name="$3"
+  local coupling_value="$4"
+  local ell="$5"
+  local n="$6"
+  local dr="$7"
+  local pattern
+  local directory
+  local omega
+
+  pattern=$(solution_family_pattern "$potential" "$coupling_name" "$coupling_value" "$ell")
+  while IFS= read -r directory; do
+    if solution_matches_grid "$directory" "$n" "$dr" && \
+       validate_solution "$directory" >/dev/null 2>&1; then
+      omega=$(metadata_value "$directory" "omega")
+      printf "%s %s\n" "$omega" "$(basename "$directory")"
+    fi
+  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print) \
+    | numeric_helper min-second
+}
+
 count_quality_solutions_on_grid() {
   local rotboson_dir="$1"
   local potential="$2"
@@ -613,20 +636,32 @@ run_target_quartic_branch() {
   local source_dir="$4"
   local target_lambda4=2513.2741228718345
   local parameter_file="$scan_dir/params/quartic_Lambda_200_l${ell}_branch.par"
-  local bridge_parameter="$scan_dir/params/quartic_Lambda_200_l${ell}_bridge.par"
   local state_dir="$scan_dir/state"
   local initialized="$state_dir/initialized"
   local completed="$state_dir/completed"
   local bridge_checkpoint="$state_dir/bridge.path"
   local rejected_dir="$scan_dir/rejected_R24"
+  local rejected_marker="$state_dir/rejected_R24_migrated"
   local bridge_n=384
   local bridge_dr=1.6666666666666666E-01
   local bridge_r_max=64.0
   local bridge_hwl_max=300
+  local bridge_stage_ns=(384 384 384 384)
+  local bridge_stage_drs=(6.25000E-02 8.3333333333333333E-02 1.25000E-01 1.6666666666666666E-01)
+  local bridge_stage_rmaxs=(24.0 32.0 48.0 64.0)
+  local bridge_stage_names=(R24 R32 R48 R64)
   local pattern
   local directory
   local bridge_source
   local bridge_dir
+  local stage_dir
+  local stage_checkpoint
+  local stage_parameter
+  local stage_index
+  local stage_n
+  local stage_dr
+  local stage_r_max
+  local stage_name
   local resume_dir
   local count
 
@@ -655,11 +690,14 @@ run_target_quartic_branch() {
   # the ordinary solution search path, preserving them for diagnosis.
   mkdir -p "$rejected_dir"
   pattern=$(solution_family_pattern "quartic" "lambda_4" "$target_lambda4" "$ell")
-  while IFS= read -r directory; do
-    if solution_matches_grid "$directory" 384 6.25000E-02; then
-      mv "$directory" "$rejected_dir/"
-    fi
-  done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print)
+  if [ ! -f "$rejected_marker" ]; then
+    while IFS= read -r directory; do
+      if solution_matches_grid "$directory" 384 6.25000E-02; then
+        mv "$directory" "$rejected_dir/$(basename "$directory").legacy.$RANDOM"
+      fi
+    done < <(find "$rotboson_dir/out" -maxdepth 1 -type d -name "$pattern" -print)
+    printf "migrated=%s\n" "$(date -Is)" > "$rejected_marker"
+  fi
 
   bridge_dir=""
   if [ -f "$bridge_checkpoint" ]; then
@@ -681,17 +719,52 @@ run_target_quartic_branch() {
     if [ -z "$bridge_source" ]; then
       bridge_source=$source_dir
     fi
-    write_initial_data_params "$rotboson_dir" "$bridge_source" "quartic" "lambda_4" "$target_lambda4" \
-      "$bridge_parameter" "$ell" 1.0 0 1.0 \
-      "$bridge_n" "$bridge_dr" "$bridge_r_max" "$bridge_hwl_max"
-    echo "Relaxing Lambda=200 l=$ell seed from $bridge_source onto large-domain bridge grid N=$bridge_n, Rmax=$bridge_r_max"
-    "$rotboson_dir/ROTBOSON" "$bridge_parameter"
-    bridge_dir=$(find_lowest_omega_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
-      "$target_lambda4" "$ell" "$bridge_n" "$bridge_dr" "$bridge_r_max" || true)
-    if [ -z "$bridge_dir" ]; then
-      echo "ERROR: large-domain bridge relaxation produced no solution passing global diagnostics" >&2
-      return 1
-    fi
+    for stage_index in "${!bridge_stage_names[@]}"; do
+      stage_name=${bridge_stage_names[$stage_index]}
+      stage_n=${bridge_stage_ns[$stage_index]}
+      stage_dr=${bridge_stage_drs[$stage_index]}
+      stage_r_max=${bridge_stage_rmaxs[$stage_index]}
+      stage_checkpoint="$state_dir/bridge_${stage_name}.path"
+      stage_parameter="$scan_dir/params/quartic_Lambda_200_l${ell}_bridge_${stage_name}.par"
+      stage_dir=""
+      if [ -f "$stage_checkpoint" ]; then
+        stage_dir=$(sed -n '1p' "$stage_checkpoint")
+        if ! solution_matches_grid "$stage_dir" "$stage_n" "$stage_dr" || \
+           ! validate_solution "$stage_dir"; then
+          rm -f "$stage_checkpoint"
+          stage_dir=""
+        fi
+      fi
+      if [ -z "$stage_dir" ]; then
+        stage_dir=$(find_lowest_converged_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+          "$target_lambda4" "$ell" "$stage_n" "$stage_dr" || true)
+      fi
+      if [ -n "$stage_dir" ] && [ "$stage_name" = "R64" ] && \
+         ! validate_equilibrium_quality "$stage_dir" "$stage_r_max" >/dev/null 2>&1; then
+        mv "$stage_dir" "$scan_dir/$(basename "$stage_dir").rejected.$RANDOM"
+        stage_dir=""
+      fi
+      if [ -z "$stage_dir" ]; then
+        write_initial_data_params "$rotboson_dir" "$bridge_source" "quartic" "lambda_4" "$target_lambda4" \
+          "$stage_parameter" "$ell" 1.0 0 1.0 \
+          "$stage_n" "$stage_dr" "$stage_r_max" "$bridge_hwl_max"
+        echo "Relaxing Lambda=200 l=$ell bridge stage $stage_name from $bridge_source onto N=$stage_n, Rmax=$stage_r_max"
+        "$rotboson_dir/ROTBOSON" "$stage_parameter"
+        stage_dir=$(find_lowest_converged_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
+          "$target_lambda4" "$ell" "$stage_n" "$stage_dr" || true)
+        if [ -z "$stage_dir" ]; then
+          echo "ERROR: bridge stage $stage_name produced no converged solution" >&2
+          return 1
+        fi
+      fi
+      if [ "$stage_name" = "R64" ]; then
+        validate_equilibrium_quality "$stage_dir" "$stage_r_max"
+      fi
+      printf "%s\n" "$stage_dir" > "$stage_checkpoint"
+      echo "Bridge stage $stage_name accepted: $stage_dir"
+      bridge_source=$stage_dir
+    done
+    bridge_dir=$bridge_source
   fi
   validate_equilibrium_quality "$bridge_dir" "$bridge_r_max"
   printf "%s\n" "$bridge_dir" > "$bridge_checkpoint"
