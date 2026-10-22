@@ -89,6 +89,14 @@ def relative_difference(a: Optional[float], b: Optional[float]) -> Optional[floa
     return abs(a - b) / max(0.5 * (abs(a) + abs(b)), 1.0e-300)
 
 
+def grid_issues(solution: dict[str, Any], n: int, r_max: float) -> list[str]:
+    if solution.get("n") != n or not math.isclose(
+        solution.get("r_max") or 0.0, r_max, rel_tol=1.0e-10
+    ):
+        return ["wrong_grid"]
+    return []
+
+
 def inspect_solution(directory: Path) -> dict[str, Any]:
     directory = directory.resolve()
     metadata_path = directory / "run_metadata.txt"
@@ -164,6 +172,7 @@ def inspect_solution(directory: Path) -> dict[str, Any]:
         "minus_gtt_origin": minus_gtt_origin,
         "phi_max": phi_max,
         "rr_phi_max": first_numeric(directory / "rr_phi_max.asc"),
+        "r99": first_numeric(directory / "r99.asc"),
         "final_residual": (
             first_numeric(directory / "final_residual.asc")
             if (directory / "final_residual.asc").exists()
@@ -286,6 +295,12 @@ def identity_issues(
 ) -> list[str]:
     issues: list[str] = []
     issues.extend(interaction_issues(solution, target))
+    if "max_r99_fraction" in target:
+        radius, extent = solution.get("r99"), solution.get("r_max")
+        if (radius is None or extent is None or not math.isfinite(radius)
+                or not math.isfinite(extent) or radius <= 0.0 or extent <= 0.0
+                or radius > target["max_r99_fraction"] * extent):
+            issues.append("insufficient_domain_margin")
     if solution.get("ell") != target["ell"]:
         issues.append("wrong_ell")
     if check_frequency and abs((solution.get("omega") or 0.0) - target["omega"]) > 1.0e-10:
@@ -374,12 +389,22 @@ def _trend_pass(rows: list[dict[str, Any]], target: dict[str, Any], series: str)
     selected.sort(key=lambda item: item[0][key])
     if len(selected) < 3:
         return False, f"{series}_series_incomplete"
-    previous, finest = selected[-2][1], selected[-1][1]
-    for observable in ("mass_relative_error", "angular_momentum_relative_error"):
-        if observable not in finest or finest[observable] is None:
-            continue
-        if previous.get(observable) is None or finest[observable] > previous[observable] + 1.0e-12:
-            return False, f"{series}_{observable}_worsened"
+    coarse, previous, finest = [item[1] for item in selected[-3:]]
+    tolerance = target.get("convergence_relative", 1.0e-3)
+    for observable in ("mass_komar", "angular_momentum", "minus_gtt_origin"):
+        values = [row.get(observable) for row in (coarse, previous, finest)]
+        if any(value is None or not math.isfinite(value) for value in values):
+            return False, f"{series}_{observable}_missing"
+        scale = max(abs(value) for value in values) or 1.0e-300
+        earlier = abs(values[1] - values[0]) / scale
+        latest = abs(values[2] - values[1]) / scale
+        # Report a grid-difference uncertainty indicator, not a fitted error bar.
+        finest[f"{series}_{observable}_relative_change"] = latest
+        finest[f"{series}_{observable}_previous_change"] = earlier
+        if latest > tolerance:
+            return False, f"{series}_{observable}_not_resolved"
+        if latest > earlier + 1.0e-10:
+            return False, f"{series}_{observable}_differences_grow"
     return True, "pass"
 
 
@@ -401,6 +426,8 @@ def build_reports(
                 "path": "", "valid": False, "issues": ["missing_checkpoint"]
             }
             passed, reasons, errors = evaluate_row(solution, target, acceptance)
+            reasons.extend(grid_issues(solution, grid["n"], grid["r_max"]))
+            passed = not reasons
             row = {
                 "target_id": target["id"], "branch": target["branch"],
                 "branch_identity": f"{target['branch']} (seed-locked)",
@@ -420,6 +447,10 @@ def build_reports(
         resolution_pass, resolution_reason = _trend_pass(target_rows, target, "resolution")
         boundary_pass, boundary_reason = _trend_pass(target_rows, target, "boundary")
         reasons = [] if production["row_pass"] else production["reasons"].split(";")
+        for row in target_rows:
+            if (not row.get("valid") or identity_issues(row, target)
+                    or grid_issues(row, row["expected_n"], row["expected_r_max"])):
+                reasons.append(f"grid_failed:{row['grid_id']}")
         if not resolution_pass:
             reasons.append(resolution_reason)
         if not boundary_pass:
@@ -483,6 +514,20 @@ def write_reports(report: dict[str, Any], output_dir: Path) -> None:
             f"{fmt(row.get('minus_gtt_origin'))} | {fmt(row.get('phi_max'))} | {fmt(row.get('final_residual'))} | "
             f"{fmt(row.get('grv2'))} | {fmt(row.get('grv3'))} |"
         )
+    lines.extend(["", "## Numerical grid differences", "",
+        "These relative differences are uncertainty indicators, not rigorous error bounds.", "",
+        "| Target | Finest grid | Series | Observable | Previous change | Latest change |",
+        "|---|---|---|---|---:|---:|",
+    ])
+    for row in report["rows"]:
+        for series in ("resolution", "boundary"):
+            for observable in ("mass_komar", "angular_momentum", "minus_gtt_origin"):
+                key = f"{series}_{observable}"
+                if key + "_relative_change" in row:
+                    lines.append(
+                        f"| {row['target_id']} | {row['grid_id']} | {series} | {observable} | "
+                        f"{fmt(row[key + '_previous_change'])} | {fmt(row[key + '_relative_change'])} |"
+                    )
     lines.extend(["", "## Errors and consistency", "",
         "| Target | Grid | dM/M | dJ/J | d[-gtt(0)] | M surface/volume | J surface/volume | J=ell Q | Result/reasons |",
         "|---|---|---:|---:|---:|---:|---:|---:|---|",
@@ -741,6 +786,9 @@ def cli() -> int:
     output_seed_parser.add_argument("--root", type=Path, required=True)
     output_seed_parser.add_argument("--target-id", required=True)
     check_parser = subparsers.add_parser("check-solution")
+    check_parser.add_argument("--expected-n", type=int)
+    check_parser.add_argument("--expected-radius", type=float)
+    check_parser.add_argument("--production-grid", action="store_true")
     check_parser.add_argument("--path", type=Path, required=True)
     check_parser.add_argument("--target-id")
     report_parser = subparsers.add_parser("report")
@@ -815,8 +863,16 @@ def cli() -> int:
     elif args.command == "check-solution":
         solution = inspect_solution(args.path)
         issues = list(solution.get("issues", []))
+        if args.expected_n is not None:
+            if args.expected_radius is None:
+                raise ValueError("--expected-n requires --expected-radius")
+            issues.extend(grid_issues(solution, args.expected_n, args.expected_radius))
         if args.target_id:
             issues.extend(identity_issues(solution, target_by_id(manifest, args.target_id)))
+            if args.production_grid:
+                target = target_by_id(manifest, args.target_id)
+                grid = next(g for g in target["grids"] if g["id"] == target["production_grid"])
+                issues.extend(grid_issues(solution, grid["n"], grid["r_max"]))
         print(json.dumps({**solution, "issues": sorted(set(issues)), "valid": not issues}, sort_keys=True))
         return 0 if not issues else 1
     elif args.command == "report":

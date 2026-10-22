@@ -51,13 +51,15 @@ void ex_cart_to_pol(
 
 	// Establish polar grid sizes and dimensions.
 	// Maximum rr extension.
-	*p_rr_inf = rr_inf = MAX(dr * (NrInterior + ghost), dz * (NzInterior + ghost));
+	rr_inf = MIN(dr * (NrInterior + ghost), dz * (NzInterior + ghost));
 	// Radial step size.
 	*p_drr = drr = MIN(dr, dz);
 	// Number of rr points.
 	NrrTotal = (MKL_INT)floor(rr_inf / drr);
 	// Assert that NrrTotal is uneven.
 	*p_NrrTotal = NrrTotal = (NrrTotal % 2) ? NrrTotal : NrrTotal - 1;
+	// Tail integrals must begin at the last sampled sphere, not beyond it.
+	*p_rr_inf = rr_inf = (NrrTotal - 1) * drr;
 	// Number of th points.
 	NthTotal = MAX(NrInterior, NzInterior);
 	// Assert that NthTotal is uneven.

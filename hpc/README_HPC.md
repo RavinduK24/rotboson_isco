@@ -24,7 +24,7 @@ bash hpc/submit_free_validation.sh --ell 1
 
 The helper submits this `afterok` chain:
 
-1. build plus `make test-potential`, `make test-jacobian`, and Python tests;
+1. build plus `make test-potential`, `make test-numerics`, `make test-jacobian`, and Python tests;
 2. weak/fundamental `l=1` continuation;
 3. adaptive continuation through the frequency minimum until the rising third
    branch brackets `omega=0.9`;
@@ -189,6 +189,14 @@ The stages are:
    Raw GRV integrals are retained for
    reporting but are not treated as normalized virial errors. Exact benchmark
    and convergence solves are subsequently interpolated onto manifest grids.
+
+The interacting manifest now keeps the exact solution at `R64_N512`.
+Resolution grids are `R64_N256`, `R64_N384`, `R64_N512`; boundary grids
+are `R48_N288`, `R64_N384`, `R80_N480` (fixed `dr=1/6`). A finite positive
+`r99 <= 0.8 R` is required for interacting validation. Numerical changes between
+grids are checked independently of rounded literature values and included in
+the reports. Rebuild before new validation solves: the Simpson quadrature,
+scalar initial tail, and virial-tail extraction radius have been corrected.
 
 During coupling homotopy, `fixedPhi=1`, `fixedOmega=0`, `scale_u4=1`, and
 `sweep=0`. Thus only the coupling changes between consecutive solves. Each

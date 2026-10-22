@@ -75,6 +75,35 @@ references.
 
 ## Benchmarks and provenance
 
+### Numerical corrections and interacting grids
+
+The interacting exact solution uses `R64_N512`. Resolution checks use
+`N=256,384,512` at `R=64`; boundary checks use `R=48,64,80` at `dr=1/6`
+(`N=288,384,480`). All interacting checkpoints must have a finite, positive
+`r99 <= 0.8 R`. A failed containment check calls for a larger domain, not a
+relaxed tolerance. Checkpoints on obsolete grids cannot satisfy the new grid.
+
+Convergence compares successive numerical values of mass, angular momentum,
+and central lapse, independently of rounded literature values. The final
+relative change must be at most 0.001 and must not grow beyond a 1e-10
+roundoff allowance. The report records both successive changes as uncertainty
+indicators; these are not Richardson error bounds or proof of fourth-order
+convergence. Every grid must converge and pass frequency, branch, grid, and
+containment checks; strict benchmark tolerances gate the production solution.
+
+The Simpson 3/8 coefficient and short-prefix handling have been corrected.
+Old cumulative profiles and derived r99 values can change; existing equilibrium
+fields remain usable as seeds, but final validation must use rebuilt code and
+fresh solves. The scalar extension now matches a local boundary value to a
+decaying bound-state tail instead of a constant. This is an initial guess,
+which Newton must reconverge. Virial tail corrections now begin at the actual
+last sampled polar radius; rectangular grids use the inscribed sphere.
+
+Run `make test-numerics` after rebuilding. It checks polynomial quadrature on
+both interval parities, short prefixes, and scalar-tail matching and decay.
+The SLURM validation build includes this gate. ADM remains a finite-radius
+profile: no extrapolation to infinity is claimed by these corrections.
+
 The exact numerical targets, precision flags, grid matrix, and tolerances live
 in the machine-readable manifest. A higher harmonic is enabled by adding its
 benchmark rows and one continuation profile to that manifest; the runner and

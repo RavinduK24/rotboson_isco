@@ -158,6 +158,12 @@ test-potential:
 	$(CC) -Wall -O2 -Isrc tests/test_potential.c src/potential.c -lm -o out/test_potential
 	./out/test_potential
 
+test-numerics:
+	$(CC) -Wall -O2 $(MKL_INCLUDE) -Isrc tests/test_numerics.c src/simpson.c -lm -o out/test_numerics
+	./out/test_numerics
+
+obj/initial_interpolation.o: src/scalar_tail.h
+
 JACOBIAN_TEST_SRCS = tests/test_jacobian_directional.c src/csr.c src/csr_grid_fill.c src/csr_vars.c src/csr_omega_constraint.c src/csr_symmetry.c src/csr_robin.c src/csr_exp_decay.c src/rhs.c src/rhs_vars.c src/derivatives.c src/omega_calc.c src/tools.c src/potential.c
 
 test-jacobian:

@@ -142,13 +142,15 @@
       "identity_window": {"mass_relative": 0.2},
       "precision": "Table II reports the maximum as M=3.48 at omega=0.82; both values are rounded, so this target is a precision-aware point near the sequence maximum.",
       "source": "Grandclement, Some and Gourgoulhon (2014), arXiv:1405.4837, Table II",
-      "production_grid": "R16_N256",
+      "production_grid": "R64_N512",
+      "max_r99_fraction": 0.8,
+      "convergence_relative": 0.001,
       "grids": [
-        {"id": "R16_N128", "series": "resolution", "n": 128, "r_max": 16.0},
-        {"id": "R16_N192", "series": "resolution,boundary", "n": 192, "r_max": 16.0},
-        {"id": "R16_N256", "series": "resolution", "n": 256, "r_max": 16.0},
-        {"id": "R12_N144", "series": "boundary", "n": 144, "r_max": 12.0},
-        {"id": "R20_N240", "series": "boundary", "n": 240, "r_max": 20.0}
+        {"id": "R64_N256", "series": "resolution", "n": 256, "r_max": 64.0},
+        {"id": "R64_N384", "series": "resolution,boundary", "n": 384, "r_max": 64.0},
+        {"id": "R64_N512", "series": "resolution", "n": 512, "r_max": 64.0},
+        {"id": "R48_N288", "series": "boundary", "n": 288, "r_max": 48.0},
+        {"id": "R80_N480", "series": "boundary", "n": 480, "r_max": 80.0}
       ]
     }
   ],

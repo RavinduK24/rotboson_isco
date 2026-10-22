@@ -60,6 +60,7 @@ def make_solution(
     write_values(directory / "Noether_charge.asc", angular * (1.0 - 1.0e-6) / target["ell"])
     write_values(directory / "phi_max.asc", 0.1)
     write_values(directory / "rr_phi_max.asc", 2.0)
+    write_values(directory / "r99.asc", grid["r_max"] * 0.5)
     write_values(directory / "norm_f.asc", 1.0e-4, 1.0e-11)
     write_values(directory / "final_residual.asc", 1.0e-11)
     write_values(directory / "GRV2.asc", 1.0e-8)
@@ -115,6 +116,33 @@ class BranchTests(unittest.TestCase):
 
 
 class SolutionAndReportTests(unittest.TestCase):
+    def test_containment_and_changed_grid_reject_old_checkpoint(self):
+        target = validation.filtered_targets(validation.load_manifest(), 1, "quartic")[0]
+        grid = next(g for g in target["grids"] if g["id"] == target["production_grid"])
+        self.assertEqual((grid["n"], grid["r_max"]), (512, 64.0))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solution"
+            make_solution(path, target, grid)
+            solution = validation.inspect_solution(path)
+            self.assertEqual(validation.identity_issues(solution, target), [])
+            self.assertEqual(validation.grid_issues(solution, 512, 64.0), [])
+            self.assertEqual(validation.grid_issues(solution, 256, 16.0), ["wrong_grid"])
+            solution["r99"] = 63.0
+            self.assertIn("insufficient_domain_margin", validation.identity_issues(solution, target))
+
+    def test_convergence_uses_grid_differences_not_rounded_reference(self):
+        target = {"grids": [{"id": str(i), "series": "resolution", "n": n}
+                             for i, n in enumerate((128, 192, 256))]}
+        rows = [{"grid_id": str(i), "mass_komar": mass,
+                 "angular_momentum": 4.0, "minus_gtt_origin": 0.5}
+                for i, mass in enumerate((3.4800, 3.4810, 3.4812))]
+        self.assertTrue(validation._trend_pass(rows, target, "resolution")[0])
+        self.assertIn("resolution_mass_komar_relative_change", rows[-1])
+        rows[-1]["mass_komar"] = 3.50
+        self.assertFalse(validation._trend_pass(rows, target, "resolution")[0])
+        rows[-1]["mass_komar"] = float("nan")
+        self.assertFalse(validation._trend_pass(rows, target, "resolution")[0])
+
     def test_checkpoint_resume_requires_a_valid_solution(self) -> None:
         manifest = validation.load_manifest()
         target = manifest["targets"][0]

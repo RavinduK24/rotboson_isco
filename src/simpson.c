@@ -15,13 +15,17 @@ double simps(double *y, const double dx, const MKL_INT dim)
 	// Number of intervals.
 	MKL_INT n = dim - 1;
 
-	// Assert that we are integrating at least 5 intervals.
-	if (dim < 6)
+	// Short prefixes occur in cumulative integrals; handle them explicitly.
+	if (dim < 2)
 	{
 		printf("CRITICAL WARNING ON SIMPSON INTEGRATION!\n");
-		printf("Need at least dim = 6 but dim = %lld.\n", dim);
+		printf("Need at least dim = 2 but dim = %lld.\n", dim);
 		return 0.0;
 	}
+	if (dim == 2)
+		return 0.5 * dx * (y[0] + y[1]);
+	if (dim == 4)
+		return 0.375 * dx * (y[0] + 3.0 * (y[1] + y[2]) + y[3]);
 
 	// Classical rule uses an even ammount of intervals.
 	if (n % 2 == 0)
@@ -44,7 +48,7 @@ double simps(double *y, const double dx, const MKL_INT dim)
 		// Recursion on Simpson with proper even number of intervals.
 		i = simps(y, dx, dim - 3);
 		// Add 3/8 rule on last four points.
-		i += 0.125 * dx * (y[dim - 4] + 3.0 * (y[dim - 3] + y[dim - 2]) + y[dim - 1]);
+		i += 0.375 * dx * (y[dim - 4] + 3.0 * (y[dim - 3] + y[dim - 2]) + y[dim - 1]);
 	}
 
 	return i;

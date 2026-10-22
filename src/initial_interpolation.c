@@ -3,10 +3,20 @@
 #include "cart_to_pol.h"
 #include "bicubic_interpolation.h"
 #include "analysis.h"
+#include "scalar_tail.h"
 
 #undef DEBUG
 
 #define GNUMI 6
+
+static double extrapolate_scalar(double *u, MKL_INT NzTotal, MKL_INT ghost,
+    MKL_INT i0, MKL_INT j0, MKL_INT i, MKL_INT j,
+    double dr, double dz, double m, double w, MKL_INT l)
+{
+    double radius0 = hypot((i0 - ghost + 0.5) * dr, (j0 - ghost + 0.5) * dz);
+    double radius = hypot((i - ghost + 0.5) * dr, (j - ghost + 0.5) * dz);
+    return scalar_tail(u[i0 * NzTotal + j0], radius0, radius, m, w, (int)l);
+}
 
 double extrapolate_robin(double *u, double u_inf, MKL_INT n, double K, MKL_INT NrTotal, MKL_INT NzTotal, MKL_INT ghost, MKL_INT order, MKL_INT i0, MKL_INT j0, MKL_INT i, MKL_INT j, double dr, double dz)
 {
@@ -169,7 +179,6 @@ void initial_interpolator(	double *u_1,
 	// Now extrapolate beyond interpolation limits.
 	//double rr_1;
 	//double rr_s;
-	double psi_bdry_max = MAX(u_1[4 * dim_1 + ghost_1 * NzTotal_1 + j_inf_1 - 1], MAX(u_1[4 * dim_1 + (i_inf_1 - 1) * NzTotal_1 + ghost_1], u_1[4 * dim_1 + (i_inf_1 - 1) * NzTotal_1 + (j_inf_1 - 1)]));
 
 	MKL_INT k_1;
 	//MKL_INT l_1;
@@ -236,7 +245,7 @@ void initial_interpolator(	double *u_1,
 				u_1[1 * dim_1 + k_1] = extrapolate_robin(&u_1[1 * dim_1], 0.0, 3, -2 * J_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 				u_1[2 * dim_1 + k_1] = extrapolate_robin(&u_1[2 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 				u_1[3 * dim_1 + k_1] = extrapolate_robin(&u_1[3 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
-				u_1[4 * dim_1 + k_1] = psi_bdry_max;
+				u_1[4 * dim_1 + k_1] = extrapolate_scalar(u_1 + 4 * dim_1, NzTotal_1, ghost_1, i_1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1, m, w, l);
 				u_1[5 * dim_1 + k_1] = extrapolate_robin(&u_1[5 * dim_1], 0.0, 4, -M_0*M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 			}
 		}	
@@ -258,7 +267,7 @@ void initial_interpolator(	double *u_1,
 				u_1[1 * dim_1 + k_1] = extrapolate_robin(&u_1[1 * dim_1], 0.0, 3, -2 * J_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_1, i_1, j_1, dr_1, dz_1);
 				u_1[2 * dim_1 + k_1] = extrapolate_robin(&u_1[2 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_1, i_1, j_1, dr_1, dz_1);
 				u_1[3 * dim_1 + k_1] = extrapolate_robin(&u_1[3 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_1, i_1, j_1, dr_1, dz_1);
-				u_1[4 * dim_1 + k_1] = psi_bdry_max;
+				u_1[4 * dim_1 + k_1] = extrapolate_scalar(u_1 + 4 * dim_1, NzTotal_1, ghost_1, i_inf_1 - ghost_1 - 1, j_1, i_1, j_1, dr_1, dz_1, m, w, l);
 				u_1[5 * dim_1 + k_1] = extrapolate_robin(&u_1[5 * dim_1], 0.0, 4, -M_0*M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_1, i_1, j_1, dr_1, dz_1);
 			}
 		}
@@ -280,7 +289,7 @@ void initial_interpolator(	double *u_1,
 				u_1[1 * dim_1 + k_1] = extrapolate_robin(&u_1[1 * dim_1], 0.0, 3, -2 * J_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 				u_1[2 * dim_1 + k_1] = extrapolate_robin(&u_1[2 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 				u_1[3 * dim_1 + k_1] = extrapolate_robin(&u_1[3 * dim_1], 0.0, 1, +    M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
-				u_1[4 * dim_1 + k_1] = psi_bdry_max;
+				u_1[4 * dim_1 + k_1] = extrapolate_scalar(u_1 + 4 * dim_1, NzTotal_1, ghost_1, i_inf_1 - ghost_1 - 1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1, m, w, l);
 				u_1[5 * dim_1 + k_1] = extrapolate_robin(&u_1[5 * dim_1], 0.0, 4, -M_0*M_0, NrTotal_1, NzTotal_1, ghost_1, order_1, i_inf_1 - ghost_1 - 1, j_inf_1 - ghost_1 - 1, i_1, j_1, dr_1, dz_1);
 			}
 		}

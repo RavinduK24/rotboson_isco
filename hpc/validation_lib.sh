@@ -31,10 +31,16 @@ validation_solution_from_pointer() {
 validation_pointer_is_valid() {
   local pointer="$1"
   local target_id="${2:-}"
+  local expected_n="${3:-}" expected_radius="${4:-}"
   local solution
   solution=$(validation_solution_from_pointer "$pointer") || return 1
+  if [ -n "$expected_n" ]; then
+    validation_python check-solution --path "$solution" --target-id "$target_id" \
+      --expected-n "$expected_n" --expected-radius "$expected_radius" >/dev/null
+    return $?
+  fi
   if [ -n "$target_id" ]; then
-    validation_python check-solution --path "$solution" --target-id "$target_id" >/dev/null
+    validation_python check-solution --path "$solution" --target-id "$target_id" --production-grid >/dev/null
   else
     validation_python check-solution --path "$solution" >/dev/null
   fi
@@ -293,7 +299,7 @@ run_exact_target() {
   local root="$VALIDATION_ROOT/l${ell}" index="$VALIDATION_ROOT/l${ell}/state/branch/index.tsv"
   local pointer="$root/state/exact/${target_id}.path" source parameter attempt
   mkdir -p "$(dirname "$pointer")" "$root/params/exact" "$root/work/exact"
-  if validation_pointer_is_valid "$pointer" "$target_id"; then
+  if validation_pointer_is_valid "$pointer" "$target_id" "$n" "$r_max"; then
     echo "Reusing exact checkpoint $target_id"
     return 0
   fi
@@ -327,7 +333,7 @@ run_convergence_target() {
     echo "ERROR: missing exact production checkpoint for $target_id" >&2
     return 1
   }
-  if validation_pointer_is_valid "$pointer" "$target_id"; then
+  if validation_pointer_is_valid "$pointer" "$target_id" "$n" "$r_max"; then
     echo "Reusing convergence checkpoint $target_id/$grid_id"
     return 0
   fi
