@@ -262,7 +262,7 @@ validate_equilibrium_quality() {
   r99=$(first_numeric_value "$directory/r99.asc")
   if ! numeric_helper equilibrium-quality \
     "$mass_surface" "$mass_volume" "$mass_adm" "$grv2" "$grv3" "$r99" "$r_max" \
-    2.0e-2 5.0e-2 5.0e-2 2.0e-1 8.0e-1; then
+    2.0e-2 5.0e-2 8.0e-1; then
     echo "ERROR: global diagnostics rejected $directory (M_s=$mass_surface M_v=$mass_volume M_ADM=$mass_adm GRV2=$grv2 GRV3=$grv3 r99=$r99 Rmax=$r_max)" >&2
     return 1
   fi
@@ -642,14 +642,14 @@ run_target_quartic_branch() {
   local bridge_checkpoint="$state_dir/bridge.path"
   local rejected_dir="$scan_dir/rejected_R24"
   local rejected_marker="$state_dir/rejected_R24_migrated"
-  local bridge_n=384
-  local bridge_dr=1.6666666666666666E-01
+  local bridge_n=512
+  local bridge_dr=1.25000E-01
   local bridge_r_max=64.0
   local bridge_hwl_max=300
-  local bridge_stage_ns=(384 384 384 384)
-  local bridge_stage_drs=(6.25000E-02 8.3333333333333333E-02 1.25000E-01 1.6666666666666666E-01)
+  local bridge_stage_ns=(384 384 384 512)
+  local bridge_stage_drs=(6.25000E-02 8.3333333333333333E-02 1.25000E-01 1.25000E-01)
   local bridge_stage_rmaxs=(24.0 32.0 48.0 64.0)
-  local bridge_stage_names=(R24 R32 R48 R64)
+  local bridge_stage_names=(R24 R32 R48 R64_N512)
   local pattern
   local directory
   local bridge_source
@@ -739,7 +739,7 @@ run_target_quartic_branch() {
         stage_dir=$(find_lowest_converged_solution_on_grid "$rotboson_dir" "quartic" "lambda_4" \
           "$target_lambda4" "$ell" "$stage_n" "$stage_dr" || true)
       fi
-      if [ -n "$stage_dir" ] && [ "$stage_name" = "R64" ] && \
+      if [ -n "$stage_dir" ] && [ "$stage_index" -eq 3 ] && \
          ! validate_equilibrium_quality "$stage_dir" "$stage_r_max" >/dev/null 2>&1; then
         mv "$stage_dir" "$scan_dir/$(basename "$stage_dir").rejected.$RANDOM"
         stage_dir=""
@@ -757,7 +757,7 @@ run_target_quartic_branch() {
           return 1
         fi
       fi
-      if [ "$stage_name" = "R64" ]; then
+      if [ "$stage_index" -eq 3 ]; then
         validate_equilibrium_quality "$stage_dir" "$stage_r_max"
       fi
       printf "%s\n" "$stage_dir" > "$stage_checkpoint"

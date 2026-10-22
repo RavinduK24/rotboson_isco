@@ -31,12 +31,12 @@ class NumericHelperTests(unittest.TestCase):
         accepted = self.run_helper(
             "equilibrium-quality",
             "3.48", "3.47", "3.46", "0.01", "0.05", "30", "64",
-            "0.02", "0.05", "0.05", "0.2", "0.8",
+            "0.02", "0.05", "0.8",
         )
         rejected = self.run_helper(
             "equilibrium-quality",
             "3.48", "3.47", "3.46", "0.01", "0.05", "63", "64",
-            "0.02", "0.05", "0.05", "0.2", "0.8",
+            "0.02", "0.05", "0.8",
         )
         self.assertEqual(accepted.returncode, 0)
         self.assertNotEqual(rejected.returncode, 0)
