@@ -251,7 +251,7 @@ class SolutionAndReportTests(unittest.TestCase):
                 solution = root / "solutions" / f"Lambda_{paper_value}"
                 make_solution(solution, target, grid)
                 (checkpoint_root / f"Lambda_{paper_value}.path").write_text(
-                    str(solution) + "\n", encoding="utf-8"
+                    str(solution.relative_to(root)) + "\n", encoding="utf-8"
                 )
             report = validation.build_coupling_report(manifest, scan, root)
             self.assertTrue(report["overall_pass"], report)

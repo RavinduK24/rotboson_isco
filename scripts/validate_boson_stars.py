@@ -258,14 +258,14 @@ def branch_phase_ready(points: list[BranchPoint], phase: str, target_omegas: Opt
     raise ValueError(f"unsupported phase: {phase}")
 
 
-def pointer_solution(pointer: Path) -> Optional[Path]:
+def pointer_solution(pointer: Path, relative_root: Optional[Path] = None) -> Optional[Path]:
     if not pointer.exists():
         return None
     value = pointer.read_text(encoding="utf-8").splitlines()[0].strip()
     if not value:
         return None
     path = Path(value)
-    return path if path.is_absolute() else (pointer.parent / path).resolve()
+    return path if path.is_absolute() else ((relative_root or pointer.parent) / path).resolve()
 
 
 def checkpoint_is_valid(pointer: Path) -> bool:
@@ -561,7 +561,7 @@ def build_coupling_report(
             ell=scan["ell"], paper_value=paper_value
         )
         pointer = output_root / relative_pointer
-        solution_path = pointer_solution(pointer)
+        solution_path = pointer_solution(pointer, output_root)
         solution = inspect_solution(solution_path) if solution_path else {
             "path": "", "valid": False, "issues": ["missing_checkpoint"]
         }
