@@ -85,7 +85,8 @@ latest_new_solution() {
 }
 
 run_one() {
-  local source=$1 scale=$2 step=$3 par="$SCAN/params/step_${step}.par" marker="$STATE/before_step"
+  local source=$1 scale=$2 step=$3
+  local par="$SCAN/params/step_${step}.par" marker="$STATE/before_step"
   local n=512 dr=0.125 rmax=64
   if [[ -f "$STATE/inflight.step" ]] && [[ $(cat "$STATE/inflight.step") == "$step" ]]; then
     latest_new_solution "$marker"
