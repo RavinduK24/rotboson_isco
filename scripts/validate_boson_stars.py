@@ -653,7 +653,7 @@ def write_coupling_report(report: dict[str, Any], output_dir: Path) -> None:
 
     for row in report["rows"]:
         lines.append(
-            f"| {fmt(row['paper_coupling_value'])} | {fmt(row['coupling_value'])} | "
+            f"| {fmt(row['paper_coupling_value'])} | {fmt(row.get('coupling_value'))} | "
             f"{fmt(row.get('omega'))} | {fmt(row.get('mass_komar'))} | "
             f"{fmt(row.get('angular_momentum'))} | {fmt(row.get('phi_max'))} | "
             f"{fmt(row.get('eta_self_interaction'))} | {fmt(row.get('mass_ratio_from_previous'))} | "

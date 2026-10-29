@@ -257,6 +257,17 @@ class SolutionAndReportTests(unittest.TestCase):
             self.assertTrue(report["overall_pass"], report)
             self.assertEqual(len(report["rows"]), len(scan["paper_values"]))
 
+    def test_coupling_report_writes_missing_checkpoint(self) -> None:
+        manifest = validation.load_manifest()
+        scan = validation.coupling_scan_by_id(manifest, "l1_quartic_homotopy")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            report = validation.build_coupling_report(manifest, scan, root)
+            self.assertFalse(report["overall_pass"])
+            validation.write_coupling_report(report, root / "reports")
+            markdown = (root / "reports" / "coupling_validation_report.md").read_text(encoding="utf-8")
+            self.assertIn("missing_checkpoint", markdown)
+
     def test_sequence_peak_report_finds_internal_literature_maximum(self) -> None:
         manifest = validation.load_manifest()
         target = validation.target_by_id(manifest, "l1_quartic_L200_w0820_fundamental")
