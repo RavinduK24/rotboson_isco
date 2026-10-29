@@ -132,7 +132,9 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 	for (index = 0; index < size; ++index)
 	{
 		double finite_difference = (fplus[index] - fminus[index]) / (2.0 * step);
-		double difference = finite_difference - product[index];
+		/* rhs() returns the negative PDE residual; the matrix is the
+		 * derivative of the positive residual used in J du = rhs. */
+		double difference = finite_difference + product[index];
 		numerator += difference * difference;
 		denominator += finite_difference * finite_difference;
 	}
