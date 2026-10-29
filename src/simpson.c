@@ -19,7 +19,7 @@ double simps(double *y, const double dx, const MKL_INT dim)
 	if (dim < 2)
 	{
 		printf("CRITICAL WARNING ON SIMPSON INTEGRATION!\n");
-		printf("Need at least dim = 2 but dim = %lld.\n", dim);
+		printf("Need at least dim = 2 but dim = %lld.\n", (long long)dim);
 		return 0.0;
 	}
 	if (dim == 2)

@@ -102,6 +102,20 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 				}
 				direction[index] = sin(0.37 * (double)(index + 1));
 			}
+	/* The residual is identically zero in ghost cells, while the Jacobian
+	 * enforces even parity there. Probe only directions tangent to those
+	 * constraints, as in the Newton solve. */
+	for (field = 0; field < GNUM; ++field)
+		for (i = 0; i < NrTotal; ++i)
+			for (j = 0; j < NzTotal; ++j)
+				if (i < ghost || j < ghost)
+				{
+					MKL_INT mirror_i = i < ghost ? 2 * ghost - i - 1 : i;
+					MKL_INT mirror_j = j < ghost ? 2 * ghost - j - 1 : j;
+					direction[field * dim + IDX(i, j)] =
+						direction[field * dim + IDX(mirror_i, mirror_j)];
+				}
+	direction[4 * dim + IDX(fixedPhiR, fixedPhiZ)] = 0.0;
 	u[w_idx] = inverse_omega_calc(0.82, m);
 	direction[w_idx] = 0.13;
 	for (index = 0; index < size; ++index)
