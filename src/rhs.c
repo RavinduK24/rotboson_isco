@@ -13,7 +13,11 @@
 
 #undef DERIVATIVE_DEBUG
 
-#define REGULARIZATION_AUXILIARIES
+/* The analytic local derivatives below use the same finite-difference
+ * stencils as the assembled Jacobian. Re-differentiating the auxiliaries
+ * with order+2 stencils makes the lambda residual nonlocal and its
+ * Jacobian inconsistent, especially next to the axis. */
+#undef REGULARIZATION_AUXILIARIES
 
 void rhs(double *f, double *u)
 {

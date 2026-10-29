@@ -272,7 +272,7 @@ void csr_grid_fill_4th(
 
 	// At this point we have filled:
 	for (k = 0; k < GNUM; ++k)
-		offset[k] = start_offset[k] + 20 + 4 * (NrInterior + NzInterior) + p_cc[k] * NrInterior * NrInterior + p_cs[k] * NrInterior + p_sc[k] * NzInterior + p_bound[k] * NrInterior;
+		offset[k] = start_offset[k] + 20 + 4 * (NrInterior + NzInterior) + p_cc[k] * NrInterior * NzInterior + p_cs[k] * NrInterior + p_sc[k] * NzInterior + p_bound[k] * NrInterior;
 
 	// Main ss stencil.
 	j = ghost + NzInterior;
@@ -345,7 +345,7 @@ void csr_grid_fill_4th(
 
 	// At this point we have filled:
 	for (k = 0; k < GNUM; ++k)
-		offset[k] = start_offset[k] + 24 + 4 * (NrInterior + NzInterior) + p_cc[k] * NrInterior * NrInterior + p_cs[k] * NrInterior + p_sc[k] * NzInterior + p_bound[k] * NrInterior + p_bound[k] * NzInterior + p_ss[k] + p_bound[k];
+		offset[k] = start_offset[k] + 24 + 4 * (NrInterior + NzInterior) + p_cc[k] * NrInterior * NzInterior + p_cs[k] * NrInterior + p_sc[k] * NzInterior + p_bound[k] * NrInterior + p_bound[k] * NzInterior + p_ss[k] + p_bound[k];
 
 	// Second to last point.
 	j = ghost + NzInterior;
