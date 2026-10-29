@@ -7,6 +7,12 @@ Phase 3.
 
 ## Conventions
 
+The HPC build gate runs the directional Jacobian check for the fourth-order
+stencil used by validation. The full `make test-jacobian` target also tests the
+second-order stencil; its strong-quartic `ell=1` cases currently fail and are
+tracked separately. Passing the production gate does not certify second-order
+strong-coupling runs.
+
 - Natural units are `G=c=hbar=mu=1`; the scalar mass is therefore `m=1` in
   parameter files.
 - The complex scalar is `Phi=phi(r,theta) exp(i(ell*varphi-omega*t))`.

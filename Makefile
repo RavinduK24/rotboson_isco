@@ -169,3 +169,7 @@ JACOBIAN_TEST_SRCS = tests/test_jacobian_directional.c src/csr.c src/csr_grid_fi
 test-jacobian:
 	$(CC) $(CFLAGS) -O1 $(MKL_INCLUDE) $(LIBCONFIG_INCLUDE) -Isrc -o out/test_jacobian $(JACOBIAN_TEST_SRCS) $(LDFLAGS) $(MKL_LD_PATH) $(LIBCONFIG_LD_PATH) $(MKL_LIBS) $(LIBCONFIG_LIB) $(OMP_LIB) $(OTHER_LIBS)
 	./out/test_jacobian
+
+test-jacobian-production:
+	$(CC) $(CFLAGS) -O1 $(MKL_INCLUDE) $(LIBCONFIG_INCLUDE) -Isrc -o out/test_jacobian $(JACOBIAN_TEST_SRCS) $(LDFLAGS) $(MKL_LD_PATH) $(LIBCONFIG_LD_PATH) $(MKL_LIBS) $(LIBCONFIG_LIB) $(OMP_LIB) $(OTHER_LIBS)
+	./out/test_jacobian --production-order-only

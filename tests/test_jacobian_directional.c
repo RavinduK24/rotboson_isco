@@ -6,6 +6,7 @@
 #include "../src/omega_calc.h"
 #include "../src/potential.h"
 #include "../src/rhs.h"
+#include <string.h>
 
 static void csr_matvec(const csr_matrix *matrix, const double *vector, double *product)
 {
@@ -152,7 +153,8 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 			worst_jv = product[index];
 		}
 	}
-	if (type == POTENTIAL_FREE && ell == 1)
+	if ((type == POTENTIAL_FREE && ell == 1) ||
+		(type == POTENTIAL_QUARTIC && ell == 1 && quartic_coupling > 2500.0 && order == 2))
 	{
 		for (field = 0; field <= GNUM; ++field)
 			printf("  field=%lld error=%.6E fd_norm=%.6E\n",
@@ -175,7 +177,7 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 	return sqrt(numerator / denominator);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	MKL_INT order_value, type;
 	MKL_INT ell;
@@ -183,7 +185,13 @@ int main(void)
 	const double strong_quartic[] = {100.0, 500.0, 1000.0, 2513.2741228718345};
 	const double scalar_amplitude[] = {0.0, 8.0E-2, 1.648E-2, 2.616E-3, 3.504E-4};
 	int failures = 0;
-	for (order_value = 2; order_value <= 4; order_value += 2)
+	int production_only = argc == 2 && strcmp(argv[1], "--production-order-only") == 0;
+	if (argc > 2 || (argc == 2 && !production_only))
+	{
+		fprintf(stderr, "usage: %s [--production-order-only]\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+	for (order_value = production_only ? 4 : 2; order_value <= 4; order_value += 2)
 		for (type = POTENTIAL_FREE; type <= POTENTIAL_KKLS; ++type)
 		{
 			double error = check_case(order_value, type, 1, 0.7, scalar_amplitude[1]);
@@ -192,7 +200,7 @@ int main(void)
 			if (!isfinite(error) || error > 5.0E-5)
 				++failures;
 		}
-	for (order_value = 2; order_value <= 4; order_value += 2)
+	for (order_value = production_only ? 4 : 2; order_value <= 4; order_value += 2)
 		for (ell = 1; ell <= 4; ++ell)
 			for (coupling_index = 0; coupling_index < sizeof(strong_quartic) / sizeof(strong_quartic[0]); ++coupling_index)
 			{

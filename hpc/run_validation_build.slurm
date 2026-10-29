@@ -29,7 +29,7 @@ else
   make all compiler=gnu
   make test-potential
   make test-numerics
-  make test-jacobian
+  make test-jacobian-production
   "${PYTHON_BIN:-python3}" -m unittest tests/test_literature_validation.py
   "${PYTHON_BIN:-python3}" -m unittest tests/test_rotboson_isco.py
 fi
