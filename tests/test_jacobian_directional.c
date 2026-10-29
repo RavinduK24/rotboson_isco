@@ -46,6 +46,9 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 	const double step = 2.0E-6;
 	MKL_INT i, j, field, index, size;
 	double numerator = 0.0, denominator = 0.0;
+	double field_error[GNUM + 1] = {0.0}, field_norm[GNUM + 1] = {0.0};
+	double worst_error = 0.0, worst_fd = 0.0, worst_jv = 0.0;
+	MKL_INT worst_index = 0;
 	double *u, *plus, *minus, *direction, *fplus, *fminus, *product;
 	csr_matrix jacobian;
 
@@ -139,6 +142,25 @@ static double check_case(MKL_INT finite_difference_order, MKL_INT type,
 		double difference = finite_difference + product[index];
 		numerator += difference * difference;
 		denominator += finite_difference * finite_difference;
+		field_error[index / dim] += difference * difference;
+		field_norm[index / dim] += finite_difference * finite_difference;
+		if (fabs(difference) > worst_error)
+		{
+			worst_error = fabs(difference);
+			worst_index = index;
+			worst_fd = finite_difference;
+			worst_jv = product[index];
+		}
+	}
+	if (type == POTENTIAL_FREE && ell == 1)
+	{
+		for (field = 0; field <= GNUM; ++field)
+			printf("  field=%lld error=%.6E fd_norm=%.6E\n",
+				(long long)field, sqrt(field_error[field]), sqrt(field_norm[field]));
+		printf("  worst_row=%lld field=%lld i=%lld j=%lld fd=%.9E Jv=%.9E\n",
+			(long long)worst_index, (long long)(worst_index / dim),
+			(long long)((worst_index % dim) / NzTotal),
+			(long long)((worst_index % dim) % NzTotal), worst_fd, worst_jv);
 	}
 
 	csr_deallocate(&jacobian);
