@@ -81,7 +81,7 @@ write_analytic_seed_params() {
     echo 'max_initial_guess_checks = 8'
     echo 'norm_f0_target = 1.0E-5'
     echo 'rr_phi_max_minimum = 1.0'
-    echo "rr_phi_max_maximum = ${r_max}"
+    printf 'rr_phi_max_maximum = %.12f\n' "$r_max"
   } >> "$parameter_file"
 }
 
@@ -171,7 +171,7 @@ write_seeded_params() {
     echo 'max_initial_guess_checks = 8'
     echo 'norm_f0_target = 1.0E-5'
     echo 'rr_phi_max_minimum = 1.0'
-    echo "rr_phi_max_maximum = ${r_max}"
+    printf 'rr_phi_max_maximum = %.12f\n' "$r_max"
     echo 'alphaBoundOrder = 1'
     echo 'betaBoundOrder = 1'
     echo 'hBoundOrder = 1'
