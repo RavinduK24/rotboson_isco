@@ -279,3 +279,37 @@ python3 scripts/plot_rotboson_outputs.py --out-dir out --plot-dir results/hpc_sc
 
 The CSV includes `eta_SI=lambda_4*phi_max^2/m^2` in addition to mass,
 frequency, virial, field, and convergence diagnostics.
+
+## Disk-limited l=1 coupling families
+
+The validated Lambda=200 branch remains in ordinary `out/`. To generate
+additional exploratory l=1 families under a 65 GiB quota, submit one job at
+a time, changing `FAMILY_LAMBDA` to 0, 10, 50, then 100. For example:
+
+```bash
+FAMILY_LAMBDA=10 FAMILY_DRY_RUN=1 bash hpc/run_disk_limited_family.slurm
+sbatch --export=ALL,FAMILY_LAMBDA=10 hpc/run_disk_limited_family.slurm
+```
+
+Export the already computed Lambda=200 bridge-grid family without rerunning it:
+
+```bash
+python3 hpc/export_existing_family.py --lambda 200 --n 512 --dr 0.125 \
+  --output out/family_scan_Lambda_200/l1/sequence.csv
+```
+
+The job advances one amplitude step per solver invocation. Every accepted
+model gets a row in `out/family_scan_Lambda_<value>/l1/sequence.csv`. It keeps
+the latest profile, the highest-mass profile, and every tenth profile, deleting
+only older profiles inside that family's own `work/` directory. CSV paths for
+deleted profiles are historical identifiers and are not guaranteed to exist.
+The original homotopy checkpoints and Lambda=200 validation outputs are never
+deleted. A 55 GiB checkout soft limit stops the job before the 65 GiB quota.
+
+The Lambda=50 seed is generated from an available nearby homotopy checkpoint.
+The sequence stops after three successive mass decreases; if it reaches the
+100-step limit first, resubmit the same job to continue. Run the families
+sequentially because the HPC account has a low submission limit and concurrent
+large runs could exceed the disk cap. These are exploratory sequences; check
+grid and outer-boundary convergence for selected ISCO models before drawing
+physical conclusions.
