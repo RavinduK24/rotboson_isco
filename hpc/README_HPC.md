@@ -307,8 +307,9 @@ The original homotopy checkpoints and Lambda=200 validation outputs are never
 deleted. A 55 GiB checkout soft limit stops the job before the 65 GiB quota.
 
 The Lambda=50 seed is generated from an available nearby homotopy checkpoint.
-The sequence stops after three successive mass decreases; if it reaches the
-100-step limit first, resubmit the same job to continue. Run the families
+The sequence stops after three successive mass decreases. Each submission runs
+up to 100 additional steps, so resubmit the same job to continue from its saved
+checkpoint if it reaches that limit. Run the families
 sequentially because the HPC account has a low submission limit and concurrent
 large runs could exceed the disk cap. These are exploratory sequences; check
 grid and outer-boundary convergence for selected ISCO models before drawing

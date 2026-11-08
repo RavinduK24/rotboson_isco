@@ -136,7 +136,7 @@ source=$(seed_path)
 validate_solution "$source"
 if [[ ${FAMILY_DRY_RUN:-0} == 1 ]]; then
   printf 'Lambda=%s ell=1 source=%s\n' "$LAMBDA" "$source"
-  printf 'Grid: N=512 Rmax=64; scale per step=%s; maximum steps=%s\n' "$STEP_SCALE" "$MAX_STEPS"
+  printf 'Grid: N=512 Rmax=64; scale per step=%s; steps per submission=%s\n' "$STEP_SCALE" "$MAX_STEPS"
   printf 'Keep every %s-th full profile plus current and peak; soft limit=%s GiB\n' "$KEEP_EVERY" "$SOFT_LIMIT_GIB"
   printf 'Summary: %s\n' "$SUMMARY"
   exit 0
@@ -167,7 +167,8 @@ fi
 
 step=$(cat "$STATE/step")
 declines=$(cat "$STATE/declines")
-while (( step < MAX_STEPS )); do
+stop_step=$((step + MAX_STEPS))
+while (( step < stop_step )); do
   storage_guard
   previous=$(cat "$STATE/current.path")
   step=$((step + 1))
@@ -219,5 +220,5 @@ while (( step < MAX_STEPS )); do
     exit 0
   fi
 done
-echo "Reached FAMILY_MAX_STEPS=$MAX_STEPS before confirming mass peak; resubmit to continue" >&2
+echo "Completed $MAX_STEPS additional step(s), ending at step=$step, before confirming mass peak; resubmit to continue" >&2
 exit 1
