@@ -110,6 +110,6 @@ done
 cd "$ROTBOSON_DIR"
 "$PYTHON_BIN" scripts/rotboson_isco.py "${RUN_ROOTS[@]}" \
   --output-dir "$RESULT_DIR" \
-  --export-profiles --plots
+  --export-profiles
 
 echo "ISCO scan complete: $RESULT_DIR"
