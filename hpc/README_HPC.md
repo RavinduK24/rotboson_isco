@@ -335,3 +335,27 @@ The sequence CSVs list all accepted equilibria, including profiles that were
 intentionally pruned to preserve disk space. A pruned profile cannot be sent
 to the ISCO processor without rerunning that equilibrium; its CSV row remains
 useful for choosing targeted reruns later.
+
+## Central-grid ICO convergence
+
+The co-rotating circular-orbit boundary found by the family scan is an ICO
+(an orbit-existence boundary), not automatically a Kerr-like ISCO. Test its
+central-grid convergence on a fixed-frequency peak-mass model before quoting
+its radius. The job re-solves the same model at fixed `Rmax=64` on
+`N=512,640,768`, using each converged grid as the interpolated seed for the
+next. It does not modify family-scan data.
+
+Run the endpoints first, one at a time:
+
+```bash
+sbatch --export=ALL,ICO_LAMBDA=0 hpc/run_l1_ico_central_convergence.slurm
+# after it finishes:
+sbatch --export=ALL,ICO_LAMBDA=200 hpc/run_l1_ico_central_convergence.slurm
+```
+
+The same job supports `ICO_LAMBDA=10`, `50`, and `100` after the endpoints.
+The co-rotating report is written to
+`validation/results/ico_central_convergence/l1/Lambda_<value>/reports/co_rotating_ico_convergence.md`.
+The ICO is supported only if its coordinate and circumferential radii approach
+nonzero limits under refinement; an ICO that moves inward in proportion to
+`dr` is a central-grid artifact.
