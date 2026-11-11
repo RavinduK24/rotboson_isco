@@ -87,12 +87,15 @@ run_grid() {
 
 # Fixed Rmax isolates central resolution. Each finer solve is interpolated from
 # the preceding converged grid, while omega and the branch identity are held fixed.
-run_grid R64_N512 512 64 "$source"
+# This deliberately modest series keeps the full Rmax=64 physical domain
+# while avoiding the much costlier N=768 solve.  It is sufficient to decide
+# whether the apparent ICO is tied to a fixed number of central grid cells.
+run_grid R64_N384 384 64 "$source"
+grid384=$GRID_SOLUTION
+run_grid R64_N512 512 64 "$grid384"
 grid512=$GRID_SOLUTION
 run_grid R64_N640 640 64 "$grid512"
 grid640=$GRID_SOLUTION
-run_grid R64_N768 768 64 "$grid640"
-grid768=$GRID_SOLUTION
 
 RESULT_DIR=$REPORTS/isco
 if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit) ]]; then
@@ -101,7 +104,7 @@ if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit
   exit 2
 fi
 "$PYTHON_BIN" "$ROTBOSON_DIR/scripts/rotboson_isco.py" \
-  "$grid512" "$grid640" "$grid768" \
+  "$grid384" "$grid512" "$grid640" \
   --output-dir "$RESULT_DIR" --export-profiles
 "$PYTHON_BIN" "$ROTBOSON_DIR/hpc/summarize_ico_convergence.py" \
   --summary "$RESULT_DIR/isco_summary.csv" \

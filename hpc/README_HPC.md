@@ -342,7 +342,7 @@ The co-rotating circular-orbit boundary found by the family scan is an ICO
 (an orbit-existence boundary), not automatically a Kerr-like ISCO. Test its
 central-grid convergence on a fixed-frequency peak-mass model before quoting
 its radius. The job re-solves the same model at fixed `Rmax=64` on
-`N=512,640,768`, using each converged grid as the interpolated seed for the
+`N=384,512,640`, using each converged grid as the interpolated seed for the
 next. It does not modify family-scan data.
 
 Run the endpoints first, one at a time:
