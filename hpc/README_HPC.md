@@ -366,3 +366,21 @@ The co-rotating report is written to
 If the diagnostic-grid ICO differs strongly from N=512, treat the current ICO as a
 central-grid artifact. Agreement is encouraging but requires a later
 three-grid refinement before it establishes a continuum ICO radius.
+
+## Free-field counter-rotating orbit benchmark
+
+To validate the counter-rotating orbit classifier on a distinct model, solve
+the exact free-field `l=1`, `omega=0.8` star on `Rmax=64, N=512` and scan its
+orbits:
+
+```bash
+sbatch hpc/run_free_w0800_counter_benchmark.slurm
+```
+
+The job seeds from the nearest retained free-field family profile, fixes
+`omega=0.8`, and writes
+`validation/results/free_w0800_counter_benchmark/reports/benchmark_summary.md`.
+It compares equilibrium values with the reference values in the benchmark
+manifest and reports the counter-rotating topology. Zhang et al. (2022)
+identify this free `k=1, omega=0.8` case as having stable inner and outer
+counter-rotating circular-orbit regions separated by an unstable band.
