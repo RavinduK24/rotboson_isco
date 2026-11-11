@@ -29,7 +29,13 @@ REQUIRED_FILES=(
 if [[ -n ${PYTHON_BIN:-} ]]; then
   PYTHON_CANDIDATES=("$PYTHON_BIN")
 else
-  PYTHON_CANDIDATES=(python3.12 python3.11 python3.10 python3.9 python3)
+  # This is the same Anaconda interpreter used by the existing validation
+  # submission helpers on the PolyU cluster.  Keep generic candidates after
+  # it for portability to other systems.
+  PYTHON_CANDIDATES=(
+    /hpcapps/Anaconda3/Anaconda3-2023.03-1/bin/python3
+    python3.12 python3.11 python3.10 python3.9 python3
+  )
 fi
 PYTHON_BIN=''
 for candidate in "${PYTHON_CANDIDATES[@]}"; do
