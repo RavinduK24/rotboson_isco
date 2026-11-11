@@ -314,3 +314,24 @@ sequentially because the HPC account has a low submission limit and concurrent
 large runs could exceed the disk cap. These are exploratory sequences; check
 grid and outer-boundary convergence for selected ISCO models before drawing
 physical conclusions.
+
+## ISCO scan for completed l=1 quartic families
+
+After completing the families at `Lambda=0,10,50,100,200`, submit:
+
+```bash
+sbatch hpc/run_l1_family_isco.slurm
+```
+
+This is postprocessing only. It selects every retained, converged model with
+the spherical metric files required by the ISCO processor: the retained
+profiles from the disk-limited `Lambda=0,10,50,100` scans and the matching
+production-grid `Lambda=200` profiles. It computes co- and counter-rotating
+circular orbits, exports every radial marginal-stability crossing, and writes
+the disk-facing ISCO selection and stability category to
+`results/isco_l1_quartic_families/`.
+
+The sequence CSVs list all accepted equilibria, including profiles that were
+intentionally pruned to preserve disk space. A pruned profile cannot be sent
+to the ISCO processor without rerunning that equilibrium; its CSV row remains
+useful for choosing targeted reruns later.
