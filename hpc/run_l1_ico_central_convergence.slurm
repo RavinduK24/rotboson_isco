@@ -24,6 +24,11 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4}
 ROTBOSON_DIR=${ROTBOSON_DIR:-$HOME/ROTBOSON_ISCO/ROTBOSON}
 ICO_LAMBDA=${ICO_LAMBDA:?Set ICO_LAMBDA to 0, 10, 50, 100, or 200}
 case "$ICO_LAMBDA" in 0|10|50|100|200) ;; *) echo 'Unsupported ICO_LAMBDA' >&2; exit 2;; esac
+ICO_N=${ICO_N:-256}
+[[ "$ICO_N" =~ ^[1-9][0-9]*$ ]] && (( ICO_N >= 64 )) || {
+  echo 'ICO_N must be an integer of at least 64' >&2
+  exit 2
+}
 
 # Same interpreter that works for the existing validation workflow.
 PYTHON_BIN=${PYTHON_BIN:-/hpcapps/Anaconda3/Anaconda3-2023.03-1/bin/python3}
@@ -87,10 +92,10 @@ run_grid() {
 }
 
 # Fixed Rmax isolates central resolution.  The pre-existing source is the
-# retained N=512 peak profile; this fresh N=256 solve holds omega fixed and
+# retained N=512 peak profile; this fresh, configurable coarse solve holds omega fixed and
 # exposes an ICO that merely tracks the grid scale.
-run_grid R64_N256 256 64 "$source"
-grid256=$GRID_SOLUTION
+run_grid R64_N${ICO_N} "$ICO_N" 64 "$source"
+grid_test=$GRID_SOLUTION
 
 RESULT_DIR=$REPORTS/isco
 if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit) ]]; then
@@ -99,11 +104,11 @@ if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit
   exit 2
 fi
 "$PYTHON_BIN" "$ROTBOSON_DIR/scripts/rotboson_isco.py" \
-  "$source" "$grid256" \
+  "$source" "$grid_test" \
   --output-dir "$RESULT_DIR" --export-profiles
 "$PYTHON_BIN" "$ROTBOSON_DIR/hpc/summarize_ico_convergence.py" \
   --summary "$RESULT_DIR/isco_summary.csv" \
   --output "$REPORTS/co_rotating_ico_convergence.csv"
 
-echo "ICO central convergence completed for Lambda=$ICO_LAMBDA"
+echo "ICO central resolution diagnostic completed for Lambda=$ICO_LAMBDA, N=$ICO_N"
 echo "Report: $REPORTS/co_rotating_ico_convergence.md"

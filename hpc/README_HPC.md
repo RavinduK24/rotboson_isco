@@ -341,7 +341,7 @@ useful for choosing targeted reruns later.
 The co-rotating circular-orbit boundary found by the family scan is an ICO
 (an orbit-existence boundary), not automatically a Kerr-like ISCO. The
 low-cost diagnostic re-solves the fixed-frequency peak model at `Rmax=64`,
-`N=256`, and compares it with the retained `N=512` peak profile. It does not
+`N=256` by default, and compares it with the retained `N=512` peak profile. It does not
 modify family-scan data. This can expose a strong grid artifact, but it is not
 a substitute for a later three-grid convergence study.
 
@@ -353,9 +353,16 @@ sbatch --export=ALL,ICO_LAMBDA=0 hpc/run_l1_ico_central_convergence.slurm
 sbatch --export=ALL,ICO_LAMBDA=200 hpc/run_l1_ico_central_convergence.slurm
 ```
 
+Set `ICO_N` to use a different diagnostic resolution. For example, the
+recommended first check for the compact Lambda=200 model is:
+
+```bash
+sbatch --export=ALL,ICO_LAMBDA=200,ICO_N=384 hpc/run_l1_ico_central_convergence.slurm
+```
+
 The same job supports `ICO_LAMBDA=10`, `50`, and `100` after the endpoints.
 The co-rotating report is written to
 `validation/results/ico_central_convergence/l1/Lambda_<value>/reports/co_rotating_ico_convergence.md`.
-If the N=256 ICO differs strongly from N=512, treat the current ICO as a
+If the diagnostic-grid ICO differs strongly from N=512, treat the current ICO as a
 central-grid artifact. Agreement is encouraging but requires a later
 three-grid refinement before it establishes a continuum ICO radius.
