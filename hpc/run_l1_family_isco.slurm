@@ -22,6 +22,31 @@ REQUIRED_FILES=(
   sph_log_h_f.asc sph_log_a_f.asc run_metadata.txt
 )
 
+# Some clusters expose an older ``python3`` by default.  The ISCO processor
+# needs Python >= 3.7 (``from __future__ import annotations``) plus NumPy and
+# SciPy.  Respect an explicit PYTHON_BIN, otherwise choose a working modern
+# interpreter from the versions available on the PolyU cluster.
+if [[ -n ${PYTHON_BIN:-} ]]; then
+  PYTHON_CANDIDATES=("$PYTHON_BIN")
+else
+  PYTHON_CANDIDATES=(python3.12 python3.11 python3.10 python3.9 python3)
+fi
+PYTHON_BIN=''
+for candidate in "${PYTHON_CANDIDATES[@]}"; do
+  command -v "$candidate" >/dev/null 2>&1 || continue
+  if "$candidate" -c 'from __future__ import annotations; import numpy, scipy' \
+      >/dev/null 2>&1; then
+    PYTHON_BIN=$(command -v "$candidate")
+    break
+  fi
+done
+if [[ -z "$PYTHON_BIN" ]]; then
+  echo 'ERROR: no compatible Python with NumPy and SciPy was found.' >&2
+  echo 'Set PYTHON_BIN to a Python >= 3.7 environment containing NumPy and SciPy.' >&2
+  exit 1
+fi
+echo "Using Python: $PYTHON_BIN ($($PYTHON_BIN --version 2>&1))"
+
 has_orbit_input() {
   local directory=$1 file
   [[ -d "$directory" ]] || return 1
@@ -77,7 +102,7 @@ for lambda in 0 10 50 100 200; do
 done
 
 cd "$ROTBOSON_DIR"
-python3 scripts/rotboson_isco.py "${RUN_ROOTS[@]}" \
+"$PYTHON_BIN" scripts/rotboson_isco.py "${RUN_ROOTS[@]}" \
   --output-dir "$RESULT_DIR" \
   --export-profiles --plots
 
