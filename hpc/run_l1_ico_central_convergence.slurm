@@ -76,8 +76,13 @@ PY
 fi
 
 run_grid() {
-  local grid_id=$1 n=$2 rmax=$3 seed=$4 pointer=$STATE/${grid_id}.path
-  local parameter=$PARAMS/${grid_id}.par attempt=$WORK/${grid_id}
+  # Assign inputs before deriving paths: under `set -u`, Bash expands every
+  # right-hand side of a combined `local` declaration before grid_id exists.
+  local grid_id=$1 n=$2 rmax=$3 seed=$4
+  local pointer parameter attempt
+  pointer=$STATE/${grid_id}.path
+  parameter=$PARAMS/${grid_id}.par
+  attempt=$WORK/${grid_id}
   if [[ -s "$pointer" && -d $(head -n 1 "$pointer") ]]; then
     GRID_SOLUTION=$(head -n 1 "$pointer")
     echo "Reusing $grid_id: $GRID_SOLUTION"
