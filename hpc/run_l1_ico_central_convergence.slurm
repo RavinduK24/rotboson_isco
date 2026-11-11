@@ -1,6 +1,7 @@
 #!/bin/bash
-# Re-solve one fixed-frequency, l=1 peak model on successively finer grids
-# and test whether its co-rotating ICO approaches a nonzero radius.
+# Re-solve one fixed-frequency, l=1 peak model once at a coarser grid and
+# compare it to the existing N=512 peak profile.  This is a low-cost central
+# resolution diagnostic, not a three-grid convergence proof.
 # Submit one coupling at a time: ICO_LAMBDA=0,10,50,100,200.
 #
 # Examples:
@@ -85,17 +86,11 @@ run_grid() {
   echo "Accepted $grid_id: $GRID_SOLUTION"
 }
 
-# Fixed Rmax isolates central resolution. Each finer solve is interpolated from
-# the preceding converged grid, while omega and the branch identity are held fixed.
-# This deliberately modest series keeps the full Rmax=64 physical domain
-# while avoiding the much costlier N=768 solve.  It is sufficient to decide
-# whether the apparent ICO is tied to a fixed number of central grid cells.
-run_grid R64_N384 384 64 "$source"
-grid384=$GRID_SOLUTION
-run_grid R64_N512 512 64 "$grid384"
-grid512=$GRID_SOLUTION
-run_grid R64_N640 640 64 "$grid512"
-grid640=$GRID_SOLUTION
+# Fixed Rmax isolates central resolution.  The pre-existing source is the
+# retained N=512 peak profile; this fresh N=256 solve holds omega fixed and
+# exposes an ICO that merely tracks the grid scale.
+run_grid R64_N256 256 64 "$source"
+grid256=$GRID_SOLUTION
 
 RESULT_DIR=$REPORTS/isco
 if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit) ]]; then
@@ -104,7 +99,7 @@ if [[ -d "$RESULT_DIR" ]] && [[ -n $(find "$RESULT_DIR" -mindepth 1 -print -quit
   exit 2
 fi
 "$PYTHON_BIN" "$ROTBOSON_DIR/scripts/rotboson_isco.py" \
-  "$grid384" "$grid512" "$grid640" \
+  "$source" "$grid256" \
   --output-dir "$RESULT_DIR" --export-profiles
 "$PYTHON_BIN" "$ROTBOSON_DIR/hpc/summarize_ico_convergence.py" \
   --summary "$RESULT_DIR/isco_summary.csv" \

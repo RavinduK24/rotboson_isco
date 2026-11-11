@@ -339,11 +339,11 @@ useful for choosing targeted reruns later.
 ## Central-grid ICO convergence
 
 The co-rotating circular-orbit boundary found by the family scan is an ICO
-(an orbit-existence boundary), not automatically a Kerr-like ISCO. Test its
-central-grid convergence on a fixed-frequency peak-mass model before quoting
-its radius. The job re-solves the same model at fixed `Rmax=64` on
-`N=384,512,640`, using each converged grid as the interpolated seed for the
-next. It does not modify family-scan data.
+(an orbit-existence boundary), not automatically a Kerr-like ISCO. The
+low-cost diagnostic re-solves the fixed-frequency peak model at `Rmax=64`,
+`N=256`, and compares it with the retained `N=512` peak profile. It does not
+modify family-scan data. This can expose a strong grid artifact, but it is not
+a substitute for a later three-grid convergence study.
 
 Run the endpoints first, one at a time:
 
@@ -356,6 +356,6 @@ sbatch --export=ALL,ICO_LAMBDA=200 hpc/run_l1_ico_central_convergence.slurm
 The same job supports `ICO_LAMBDA=10`, `50`, and `100` after the endpoints.
 The co-rotating report is written to
 `validation/results/ico_central_convergence/l1/Lambda_<value>/reports/co_rotating_ico_convergence.md`.
-The ICO is supported only if its coordinate and circumferential radii approach
-nonzero limits under refinement; an ICO that moves inward in proportion to
-`dr` is a central-grid artifact.
+If the N=256 ICO differs strongly from N=512, treat the current ICO as a
+central-grid artifact. Agreement is encouraging but requires a later
+three-grid refinement before it establishes a continuum ICO radius.
